@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "operations",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["netlify", "dev", "--dir", "operations/public", "--functions", "operations/netlify/functions", "--port", "8888"],
+      "port": 8888
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["netlify", "dev", "--dir", "demo/public", "--functions", "demo/netlify/functions", "--port", "8889"],
+      "port": 8889
+    },
+    {
+      "name": "your-soloos",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["netlify", "dev", "--dir", "your-soloos/public", "--functions", "your-soloos/netlify/functions", "--port", "8890"],
+      "port": 8890
+    }
+  ]
+}

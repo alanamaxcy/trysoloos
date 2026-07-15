@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Good Work — Sales Playbook</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Young+Serif&family=Adamina&display=swap');
+
+:root{
+  --navy:#2C3E50; --coral:#CB6E55; --terra:#A65541; --cream:#F7F2E7;
+  --paper:#FBF9F3; --slate:#5B6B78; --amber:#D9A05B; --green:#2f8f6b;
+  --ink:#2C3E50; --muted:#5B6B78; --line:#e7ded0; --line2:#efe7d8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Adamina',Georgia,serif; color:var(--ink); background:var(--paper);
+  line-height:1.6; -webkit-font-smoothing:antialiased;
+  font-size:15px;
+}
+h1,h2,h3,h4,.serif{font-family:'Young Serif',Georgia,serif;font-weight:400;letter-spacing:-.01em;line-height:1.12}
+
+.sheet{max-width:900px;margin:0 auto;padding:0 26px}
+.section{padding:60px 0;border-top:1px solid var(--line)}
+.section:first-of-type{border-top:none}
+
+.eyebrow{display:flex;align-items:center;gap:12px;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--coral);margin-bottom:18px;font-family:'Adamina',serif}
+.eyebrow .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1.5px solid var(--coral);border-radius:50%;font-size:12px;letter-spacing:0;flex:0 0 auto}
+.eyebrow .rule{flex:1;height:1px;background:var(--line)}
+
+.h2{font-size:30px;color:var(--navy);margin-bottom:10px}
+.lead{font-size:17px;color:var(--slate);max-width:680px;margin-bottom:26px}
+
+/* cover */
+.cover{background:var(--cream);text-align:left;padding:0}
+.cover-inner{max-width:900px;margin:0 auto;padding:84px 26px 0}
+.cover .kicker{font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);margin-bottom:30px}
+.cover h1{font-size:clamp(46px,8vw,82px);color:var(--coral);line-height:.98;margin-bottom:24px}
+.cover h1 .nv{color:var(--navy);display:block}
+.cover .sub{font-size:20px;color:var(--navy);max-width:540px;margin-bottom:46px}
+.cover-bar{background:var(--navy);color:#fff;margin-top:60px}
+.cover-bar .ci{max-width:900px;margin:0 auto;padding:26px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:13.5px;color:#cdd6de}
+.cover-bar strong{color:#fff;font-weight:400;font-family:'Young Serif',serif}
+
+/* big idea callout */
+.callout{background:var(--navy);color:#fff;border-radius:20px;padding:40px 42px}
+.callout .q{font-family:'Young Serif',serif;font-size:26px;line-height:1.25;color:#fff;margin-bottom:18px}
+.callout .q .hl{color:var(--amber)}
+.callout p{color:#cdd6de;font-size:15.5px;max-width:640px}
+.callout p + p{margin-top:12px}
+
+/* cards */
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 24px;box-shadow:0 8px 22px rgba(44,62,80,.05)}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+.card h3{font-size:18px;color:var(--navy);margin-bottom:8px}
+.card p{font-size:14px;color:var(--slate)}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin-bottom:12px;font-family:'Adamina',serif}
+.tag.flag{color:#fff;background:var(--coral)}
+.tag.wedge{color:var(--terra);background:#f6ece2;border:1px solid #ecdcc9}
+.tag.support{color:var(--slate);background:#eef1f3;border:1px solid #dde4e8}
+
+/* offer hierarchy / funnel */
+.funnel{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.doors{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.door{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 18px;text-align:center}
+.door .dn{font-family:'Young Serif',serif;font-size:16px;color:var(--navy)}
+.door .dd{font-size:12.5px;color:var(--slate);margin-top:4px}
+.flow-arrow{display:flex;justify-content:center;color:var(--coral);font-size:22px;line-height:1}
+.flagband{background:var(--navy);color:#fff;border-radius:16px;padding:24px 26px;text-align:center}
+.flagband .fl{font-family:'Young Serif',serif;font-size:22px;color:#fff}
+.flagband .fd{font-size:14px;color:#cdd6de;margin-top:6px}
+.prize{background:#eaf4ee;border:1px solid #c8e3d4;border-radius:14px;padding:18px;text-align:center}
+.prize .pn{font-family:'Young Serif',serif;font-size:18px;color:var(--green)}
+.prize .pd{font-size:12.5px;color:#3f7a62;margin-top:3px}
+
+/* spectrum (signature visual) */
+.spectrum-bar{height:14px;border-radius:8px;background:linear-gradient(90deg,var(--terra),var(--amber));margin:6px 0 4px}
+.spectrum-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--slate);margin-bottom:18px}
+.spec-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.spec{border-radius:16px;padding:22px;border:1px solid var(--line);background:#fff}
+.spec.left{border-top:4px solid var(--terra)}
+.spec.right{border-top:4px solid var(--amber)}
+.spec .st{font-family:'Young Serif',serif;font-size:18px;color:var(--navy);margin-bottom:4px}
+.spec .ss{font-size:12.5px;color:var(--coral);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.spec ul{list-style:none}
+.spec li{font-size:13.5px;color:var(--slate);padding-left:18px;position:relative;margin-bottom:8px}
+.spec li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--coral)}
+.spec .lead-with{margin-top:14px;font-size:13px;color:var(--navy);background:var(--cream);border-radius:10px;padding:10px 12px}
+.spec .lead-with b{font-family:'Young Serif',serif;font-weight:400}
+.root-band{margin-top:16px;background:var(--navy);color:#fff;border-radius:14px;padding:16px 22px;text-align:center}
+.root-band .rt{font-family:'Young Serif',serif;font-size:18px;color:#fff}
+.root-band .rd{font-size:13px;color:#cdd6de;margin-top:3px}
+.invert{margin-top:16px;border:1px dashed var(--coral);border-radius:12px;padding:14px 18px;font-size:13.5px;color:var(--terra);background:#fbf2ec}
+.invert b{font-family:'Young Serif',serif;font-weight:400}
+
+/* pitches */
+.pitch{border-radius:16px;padding:24px;color:#fff}
+.pitch.a{background:var(--terra)}
+.pitch.b{background:var(--slate)}
+.pitch .pl{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-bottom:10px}
+.pitch .pq{font-size:15px;line-height:1.55}
+
+/* pillars */
+.pillar{position:relative;padding-top:30px}
+.pillar .pnum{position:absolute;top:0;left:0;font-family:'Young Serif',serif;font-size:13px;color:#fff;background:var(--coral);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.pillar h3{margin-top:6px}
+
+/* ladder */
+.ladder{display:flex;flex-direction:column;gap:12px}
+.rung{display:grid;grid-template-columns:90px 1fr;gap:16px;align-items:start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.rung .lt{font-family:'Young Serif',serif;color:var(--coral);font-size:15px}
+.rung .lt small{display:block;color:var(--slate);font-size:11.5px;font-family:'Adamina',serif;letter-spacing:.04em;text-transform:uppercase;margin-top:3px}
+.rung .lc{font-size:14px;color:var(--navy)}
+
+/* discovery checklist */
+.qlist{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qrow{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--navy)}
+.qrow .ck{flex:0 0 auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--coral);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.qrow .ck svg{width:11px;height:11px}
+.qrow .qf{display:block;font-size:12px;color:var(--coral);margin-top:3px;font-style:italic}
+
+/* objections */
+.obj{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.obj .they{background:var(--cream);padding:16px 20px;font-family:'Young Serif',serif;font-size:16px;color:var(--terra)}
+.obj .they::before{content:'“';opacity:.5}
+.obj .they::after{content:'”';opacity:.5}
+.obj .you{padding:16px 20px;font-size:14px;color:var(--navy)}
+.obj .you .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);display:block;margin-bottom:6px}
+
+/* pricing */
+.ptable{width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.ptable th,.ptable td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line2)}
+.ptable th{background:var(--navy);color:#fff;font-family:'Adamina',serif;font-weight:400;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.ptable tr:last-child td{border-bottom:none}
+.ptable .svc{font-family:'Young Serif',serif;color:var(--navy);font-size:14px}
+.ptable .price{color:var(--coral);white-space:nowrap}
+.moves{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.move{background:var(--cream);border-radius:12px;padding:16px 18px}
+.move .mt{font-family:'Young Serif',serif;font-size:15px;color:var(--navy);margin-bottom:5px}
+.move p{font-size:13px;color:var(--slate)}
+
+/* competitive */
+.story{border-radius:16px;padding:22px;background:#fff;border:1px solid var(--line)}
+.story.a{border-left:5px solid var(--terra)}
+.story.b{border-left:5px solid var(--amber)}
+.story .sh{font-family:'Young Serif',serif;font-size:17px;color:var(--navy);margin-bottom:8px}
+.story .line{font-size:13.5px;color:var(--navy);background:var(--cream);border-radius:10px;padding:10px 12px;margin:10px 0}
+.story p{font-size:13px;color:var(--slate)}
+
+/* choreography */
+.choreo{display:flex;flex-direction:column;gap:12px}
+.croute{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+.croute .entry{font-family:'Young Serif',serif;color:var(--coral);font-size:15px}
+.croute .path{font-size:13.5px;color:var(--navy)}
+.croute .path .arr{color:var(--coral);margin:0 6px}
+
+/* close */
+.close{background:var(--navy);color:#fff;border-radius:20px;padding:46px 40px;text-align:center}
+.close h2{font-size:28px;color:#fff;margin-bottom:14px}
+.close p{color:#cdd6de;font-size:16px;max-width:600px;margin:0 auto}
+.close .sig{margin-top:22px;font-family:'Young Serif',serif;font-size:18px;color:var(--amber)}
+
+.foot{text-align:center;padding:34px 0 56px;font-size:12px;color:var(--slate)}
+
+@media (max-width:720px){
+  .g2,.g3,.g4,.doors,.spec-cols,.qlist,.moves,.choreo .croute{grid-template-columns:1fr}
+  .rung,.croute{grid-template-columns:1fr}
+  .cover h1{line-height:1.02}
+}
+@media print{
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .section{padding:34px 0;break-inside:avoid}
+  .card,.spec,.obj,.story,.rung,.croute,.callout,.close,.flagband{break-inside:avoid}
+  .cover{break-after:page}
+  .eyebrow{break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<header class="cover">
+  <div class="cover-inner">
+    <div class="kicker">Good Work · Sales Playbook</div>
+    <h1>Sell the<span class="nv">proof.</span></h1>
+    <p class="sub">What we sell, who we sell to, and exactly what to say. Everything a rep needs on a call, in one place.</p>
+  </div>
+  <div class="cover-bar">
+    <div class="ci">
+      <span>Prepared for: <strong>____________________</strong></span>
+      <span>dogoodwork.me · Good Work</span>
+    </div>
+  </div>
+</header>
+
+<div class="sheet">
+
+  <!-- 1. THE ONE IDEA -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">1</span> The one idea <span class="rule"></span></div>
+    <div class="callout">
+      <div class="q">We help nonprofits <span class="hl">prove their programs work</span> — and use that proof to improve them and raise more funding.</div>
+      <p>Everything we sell solves one root problem: <b>funding.</b> Program data, evaluation, quality, reporting — that's the work, but it all exists to protect and grow the money that keeps good programs alive.</p>
+      <p>You don't sell that root directly. You sell the pain a prospect <b>feels</b>, and anchor it to funding. And every deal points toward one prize: a <b>recurring retainer.</b></p>
+    </div>
+  </section>
+
+  <!-- 2. WHAT YOU SELL -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">2</span> What you sell <span class="rule"></span></div>
+    <h2 class="h2 serif">One hero. Three doors. One prize.</h2>
+    <p class="lead">Never pitch this as four equal services. Lead with the flagship; let the rest support it. Three front doors all lead to the same place.</p>
+
+    <div class="funnel">
+      <div class="doors">
+        <div class="door"><div class="dn">Strategic Planning</div><div class="dd">the highest-trust on-ramp</div></div>
+        <div class="door"><div class="dn">Good Work software</div><div class="dd">the low-cost wedge</div></div>
+        <div class="door"><div class="dn">Data Strategy Sprint</div><div class="dd">direct entry</div></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flagband">
+        <div class="fl">Impact Management — the flagship</div>
+        <div class="fd">Theory of change · RBA measures · funder-ready proof · program improvement</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="prize">
+        <div class="pn">A recurring retainer</div>
+        <div class="pd">the prize — every door is built to lead here</div>
+      </div>
+    </div>
+
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card"><span class="tag flag">Flagship</span><h3>Impact Management</h3><p>Sprint ($6K) and retainers (from $1,800/mo). The thing you're known for and lead with.</p></div>
+      <div class="card"><span class="tag wedge">Wedge</span><h3>Good Work software</h3><p>$3–5K/yr. Gets you in cheap and reveals the gaps only consulting can fix.</p></div>
+      <div class="card"><span class="tag support">Support</span><h3>Strategic planning &amp; grant writing</h3><p>Planning is the front door; grant writing is the quiet cross-sell.</p></div>
+    </div>
+  </section>
+
+  <!-- 3. WHO -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">3</span> Who you sell to <span class="rule"></span></div>
+    <div class="grid g2">
+      <div class="card" style="border-top:4px solid var(--green)">
+        <h3 style="color:var(--green)">Lean in</h3>
+        <p style="color:var(--navy)">Small-to-mid nonprofits ($250K–$3M) with a program that has <b>measurable outcomes</b> and <b>multiple funders</b> who want reports. No full-time data person. Drowning in spreadsheets or paying for 3–5 tools. Strongest signals:</p>
+        <ul style="margin-top:10px;list-style:none">
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">→ "Reporting season is brutal here."</li>
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">→ "We know it works, we just can't prove it."</li>
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">→ "Our data lives in five places."</li>
+          <li style="font-size:13px;color:var(--slate)">→ Just landed a multi-year grant with real reporting.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:4px solid var(--terra)">
+        <h3 style="color:var(--terra)">Walk away</h3>
+        <p style="color:var(--navy)">Disqualifying fast is a skill, not a failure.</p>
+        <ul style="margin-top:10px;list-style:none">
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">✕ Advocacy/arts orgs with no outcome data.</li>
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">✕ Orgs with a real data team and a system they love.</li>
+          <li style="font-size:13px;color:var(--slate);margin-bottom:6px">✕ Price-only objection with zero reporting pain.</li>
+          <li style="font-size:13px;color:var(--slate)">✕ Anyone who really wants a CRM or donor database.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. THE REAL PROBLEM + SPECTRUM (signature) -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">4</span> The problem you're really selling against <span class="rule"></span></div>
+    <h2 class="h2 serif">Same root. Two felt needs.</h2>
+    <p class="lead">The root is always funding. But what an org <i>feels</i> depends on where it sits on the funding spectrum — and what it feels is your way in.</p>
+
+    <div class="spectrum-bar"></div>
+    <div class="spectrum-ends"><span>Funding-insecure (money is on fire)</span><span>Funding-secure (drowning in data)</span></div>
+
+    <div class="spec-cols">
+      <div class="spec left">
+        <div class="st">Funding-insecure</div>
+        <div class="ss">feels it day &amp; night</div>
+        <ul>
+          <li>"We can't raise enough."</li>
+          <li>"We can't prove it works, even though it does."</li>
+          <li>The proof gap blocks the next grant — acute, present.</li>
+        </ul>
+        <div class="lead-with"><b>Lead with funding.</b> It's what's on fire.</div>
+      </div>
+      <div class="spec right">
+        <div class="st">Funding-secure</div>
+        <div class="ss">drowning in reporting</div>
+        <ul>
+          <li>Data in five places; every report a weekend.</li>
+          <li>Funding's fine now — but bad reporting quietly risks renewals.</li>
+          <li>The funding risk is latent, not felt.</li>
+        </ul>
+        <div class="lead-with"><b>Lead with the chaos.</b> Then reveal the risk underneath.</div>
+      </div>
+    </div>
+
+    <div class="root-band">
+      <div class="rt">Same root: funding sustainability</div>
+      <div class="rd">both doors lead here</div>
+    </div>
+
+    <div class="invert"><b>The affordability inversion:</b> the orgs that feel funding pain <i>most</i> can afford you <i>least</i>; the ones who can afford you <i>most</i> feel it <i>least</i>. The software resolves it — a cheap entry that builds proof for the strapped, and operational relief that gets you inside the flush org, whose messy data then reveals the funding risk that becomes your consulting upsell.</div>
+  </section>
+
+  <!-- 5. TWO PITCHES -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">5</span> The two pitches <span class="rule"></span></div>
+    <h2 class="h2 serif">Route by felt need. Never blend them.</h2>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="pitch a">
+        <div class="pl">For the funding-insecure org</div>
+        <div class="pq">"You're doing real work, but fighting for every dollar — and the hardest part is you can't <i>show</i> a funder it's working, even though you know it is. That gap is costing you grants you've earned. Fix the proof, and the funding follows. We can start small: the software gets your data in one place for a few thousand a year, and from there we build the evidence that wins the next grant."</div>
+      </div>
+      <div class="pitch b">
+        <div class="pl">For the funding-secure org</div>
+        <div class="pq">"You've got the funding. What you don't have is your sanity at reporting season — data in five places, every report a lost weekend. We put it in one place so reporting takes an afternoon. And here's what surfaces once we do: the numbers you've been reporting don't actually show <i>outcomes</i> — which is exactly what funders are starting to ask for. We fix that too, so the renewals you're counting on don't quietly slip."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. PILLARS -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">6</span> The four messaging pillars <span class="rule"></span></div>
+    <p class="lead">The spine of every conversation. Every claim should reinforce at least one.</p>
+    <div class="grid g4">
+      <div class="card pillar"><span class="pnum">1</span><h3>Show it worked</h3><p>Beyond counting activities. Answer the funder's real question: is anyone better off?</p></div>
+      <div class="card pillar"><span class="pnum">2</span><h3>One source of truth</h3><p>Attendance, surveys, outcomes, grants — in one place, not five tools that don't talk.</p></div>
+      <div class="card pillar"><span class="pnum">3</span><h3>Funder-ready in one click</h3><p>The Grants Portal turns a week of reporting into a single click.</p></div>
+      <div class="card pillar"><span class="pnum">4</span><h3>Expertise, not just a tool</h3><p>Built and backed by an evaluator who's run this for real programs.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. PITCH BY LENGTH -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">7</span> The pitch, by length <span class="rule"></span></div>
+    <div class="ladder">
+      <div class="rung">
+        <div class="lt">7 sec<small>The hook</small></div>
+        <div class="lc">"Most programs can say what they did. Fewer can show it worked. We fix that — and turn a week of reporting dread into a single click."</div>
+      </div>
+      <div class="rung">
+        <div class="lt">30 sec<small>The elevator</small></div>
+        <div class="lc">"Good Work helps nonprofits prove their programs work and use that proof to raise more funding. We build the evaluation framework, put your data in one place with our software, and turn it into funder-ready reports on demand — backed by an evaluator who's spent 15 years doing this inside programs. Most clients start with one piece and grow into an ongoing partnership."</div>
+      </div>
+      <div class="rung">
+        <div class="lt">2 min<small>The full arc</small></div>
+        <div class="lc">Open with the pain they feel (route by §5). Name it sharper than they can. Walk the RBA frame — how much, how well, is anyone better off — and <i>show the thinking</i> on a real example (the theory-of-change reframe). Land on the funnel: "Start wherever the pain is sharpest, and it builds toward a partnership where I'm your fractional impact officer." Close soft.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. DISCOVERY -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">8</span> Discovery questions <span class="rule"></span></div>
+    <p class="lead">Find the felt need, then route. One question per turn — let them talk. Name their pain back to them more clearly than they named it.</p>
+    <div class="qlist">
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"Walk me through your last grant report — what did putting it together actually look like?"<span class="qf">finds reporting pain</span></span></div>
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"When a funder asks if your program is working, what do you show them?"<span class="qf">finds the proof gap</span></span></div>
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"Where does your program data live right now?"<span class="qf">finds the five-places problem</span></span></div>
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"Is there anyone whose job is the data and evaluation?"<span class="qf">finds the missing hire — your sweet spot</span></span></div>
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"What outcomes did you promise funders this year, and how confident are you that you can show them?"<span class="qf">finds funding risk</span></span></div>
+      <div class="qrow"><span class="ck"><svg viewBox="0 0 12 12" fill="none" stroke="#CB6E55" stroke-width="2"><path d="M2 6l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>"Is funding tight right now, or is the bigger pain keeping up with what you've got?"<span class="qf">places them on the spectrum</span></span></div>
+    </div>
+  </section>
+
+  <!-- 9. OBJECTIONS -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">9</span> Objection scripts <span class="rule"></span></div>
+    <p class="lead">The page to flip to mid-call. They say → you say.</p>
+    <div class="grid g2">
+      <div class="obj"><div class="they">It's too expensive.</div><div class="you"><span class="lbl">You say</span>"Fair — let's add up what you already spend across tools <i>and</i> staff time at reporting season. Most orgs your size are already past this number; it's just spread out and invisible. And a lot of orgs fund this right out of a grant's evaluation line." <i>(Then ask if their grants have an eval budget — they usually do.)</i></div></div>
+      <div class="obj"><div class="they">We track everything in spreadsheets.</div><div class="you"><span class="lbl">You say</span>"Spreadsheets are great until reporting season — then they're five files, three versions, and a weekend. The question isn't whether you <i>can</i> track it; it's what it costs you every time you have to <i>report</i> it."</div></div>
+      <div class="obj"><div class="they">We're too small for this.</div><div class="you"><span class="lbl">You say</span>"Small is exactly who this is for. Big orgs have a data team — you <i>are</i> the data team, on top of everything else. This gives a small org the reporting muscle of a big one, without the hire."</div></div>
+      <div class="obj"><div class="they">Can't the software do it without the consulting?</div><div class="you"><span class="lbl">You say</span>"It can hold and report your data beautifully — but only what you've <i>defined</i>, and most orgs haven't defined the right outcomes yet. That's the sprint. Start with just the software; most people want the sprint within a few months."</div></div>
+      <div class="obj"><div class="they">We already have a consultant.</div><div class="you"><span class="lbl">You say</span>"Great — then you have direction. The question is whether it's getting implemented and measured. I stay through implementation, and I bring software and an evaluation framework most consultants don't."</div></div>
+      <div class="obj"><div class="they">We don't have time right now.</div><div class="you"><span class="lbl">You say</span>"That's the point — this gives time back. Setup's on me, reporting stops eating weekends. If now's genuinely wrong, let's pick the season after your next big deadline."</div></div>
+    </div>
+  </section>
+
+  <!-- 10. PRICING -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">10</span> Pricing cheat-sheet <span class="rule"></span></div>
+    <p class="lead">Always anchor first — what it replaces — then the number. Price after value, never before.</p>
+    <table class="ptable">
+      <thead><tr><th>What</th><th>Type</th><th>Price (base tier)</th></tr></thead>
+      <tbody>
+        <tr><td class="svc">Good Work software</td><td>Annual license</td><td class="price">$3K–5K/yr</td></tr>
+        <tr><td class="svc">Data Strategy Sprint</td><td>One-time, 4–6 wks</td><td class="price">$6,000</td></tr>
+        <tr><td class="svc">Impact Mgmt retainer</td><td>Monthly, 6-mo min</td><td class="price">from $1,800/mo</td></tr>
+        <tr><td class="svc">Impact Storytelling</td><td>One-time</td><td class="price">$10,000</td></tr>
+        <tr><td class="svc">Strategic Planning</td><td>Project</td><td class="price">$2,500–7,500</td></tr>
+        <tr><td class="svc">Grant Writing</td><td>Hourly / retainer</td><td class="price">$95/hr or from $2K/mo</td></tr>
+      </tbody>
+    </table>
+    <div class="moves">
+      <div class="move"><div class="mt">The setup-waiver wedge</div><p>Software setup is waived when they bundle a consulting retainer. "If we're already working together, setup's on me." Makes the software an easy yes <i>and</i> pulls them to the retainer.</p></div>
+      <div class="move"><div class="mt">Sliding scale (equity pricing)</div><p>Under $500K → 20% off · $500K–$2M → 10% off. How you serve the orgs who feel the pain most but can pay least. It's values, not a discount gimmick.</p></div>
+    </div>
+  </section>
+
+  <!-- 11. COMPETITIVE -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">11</span> The competitive story <span class="rule"></span></div>
+    <h2 class="h2 serif">Two stories. Use one — don't blend.</h2>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="story a">
+        <div class="sh">Story A — replace the stack</div>
+        <p>For better-funded orgs already overspending on Tableau + Submittable + StoryRaise + Typeform — $9–14K/yr of disconnected tools.</p>
+        <div class="line">"One platform built for your program — replaces a $9–14K stack, starting at $3,000."</div>
+        <p>You win on <b>price and simplicity.</b> (The funding-secure end.)</p>
+      </div>
+      <div class="story b">
+        <div class="sh">Story B — stop duct-taping</div>
+        <p>For small orgs wiring together Airtable + Jotform + Looker for ~$1,200/yr. You are <i>not</i> cheaper — don't pretend to be.</p>
+        <div class="line">"It doesn't replace a $1,200 line item — it replaces a part-time data hire you can't afford."</div>
+        <p>You win on <b>time and expertise.</b> (The funding-insecure end.)</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;border-left:5px solid var(--coral)">
+      <h3>vs. Clear Impact &amp; other consultants</h3>
+      <p>Don't attack Clear Impact — out-position. You're the <b>modern, designed, human</b> RBA platform: same framework funders trust, built for how programs actually work today. And unlike most consultants, you're a practitioner who stays through implementation — and brings software no consultant has.</p>
+    </div>
+  </section>
+
+  <!-- 12. CHOREOGRAPHY -->
+  <section class="section">
+    <div class="eyebrow"><span class="num">12</span> Moving every deal toward a retainer <span class="rule"></span></div>
+    <p class="lead">A license sold and walked away from is a trap, not a win. Every entry point has a built-in next step.</p>
+    <div class="choreo">
+      <div class="croute"><div class="entry">Strategic plan</div><div class="path">plan surfaces an impact priority <span class="arr">→</span> Data Strategy Sprint <span class="arr">→</span> software + retainer</div></div>
+      <div class="croute"><div class="entry">Software</div><div class="path">onboarding reveals the gaps (no theory of change, messy data) <span class="arr">→</span> Sprint <span class="arr">→</span> retainer</div></div>
+      <div class="croute"><div class="entry">Data sprint</div><div class="path">framework built, needs a home + hands <span class="arr">→</span> software + retainer</div></div>
+    </div>
+  </section>
+
+  <!-- CLOSE -->
+  <section class="section">
+    <div class="close">
+      <h2 class="serif">The whole game, in four lines.</h2>
+      <p>Sell the symptom they feel. Anchor the price to the funding underneath. Lead with the flagship, enter through whatever door is open — and make sure every door leads to a recurring retainer. The software shows them the problem; you solve it.</p>
+      <div class="sig">Let's do good, together.</div>
+    </div>
+  </section>
+
+</div>
+
+<div class="foot">Good Work · dogoodwork.me · Internal sales playbook</div>
+
+</body>
+</html>

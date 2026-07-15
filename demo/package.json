@@ -1,0 +1,10 @@
+{
+  "name": "good-work-ops",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Good Work internal operations: pipeline, projects, people, and to-dos.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
