@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Good Work HQ</title>
+<style>
+  :root{ --ink:#2C3E50; --ink2:#4E5A63; --faint:#8A97A1; --accent:#CB6E55; --line:#E7EBEE; --bg:#FBFAF8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Nunito',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.6; }
+  .wrap{ max-width:760px; margin:0 auto; padding:48px 22px 80px; }
+  header{ border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:30px; }
+  .brand{ font-weight:800; letter-spacing:.2px; color:var(--accent); font-size:15px; text-transform:uppercase; }
+  h1{ font-size:30px; margin:10px 0 6px; }
+  .updated{ color:var(--faint); font-size:14px; font-weight:600; }
+  h2{ font-size:19px; margin:34px 0 8px; color:var(--ink); }
+  p, li{ color:var(--ink2); font-size:16px; }
+  ul{ padding-left:22px; }
+  a{ color:var(--accent); }
+  .note{ background:#fff; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; padding:14px 16px; font-size:14.5px; color:var(--ink2); }
+  footer{ margin-top:50px; padding-top:20px; border-top:1px solid var(--line); font-size:13.5px; color:var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Good Work HQ</div>
+    <h1>Privacy Policy</h1>
+    <div class="updated">Last updated: July 16, 2026</div>
+  </header>
+
+  <p>This Privacy Policy explains how Good Work HQ (the &ldquo;App,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) collects, uses, stores, and protects information when you use the App and when you connect the App to third-party services such as QuickBooks Online. Good Work HQ is an internal business-operations dashboard operated by Good Work (<a href="https://goodworkhq.co">goodworkhq.co</a>).</p>
+
+  <h2>Information we collect</h2>
+  <ul>
+    <li><b>Business data you enter</b> — pipeline, projects, tasks, goals, contacts, notes, and settings you create inside the App.</li>
+    <li><b>QuickBooks Online data</b> — when you connect QuickBooks, the App accesses read-only accounting report data (such as Profit &amp; Loss / income figures) for the company (&ldquo;realm&rdquo;) you authorize. We request only the <code>com.intuit.quickbooks.accounting</code> scope and use it solely to display financial figures inside your dashboard.</li>
+    <li><b>Connection tokens</b> — the OAuth access and refresh tokens QuickBooks issues so the App can retrieve your reports on your behalf.</li>
+  </ul>
+
+  <h2>How we use information</h2>
+  <ul>
+    <li>To display your revenue and financial figures on your dashboard and reports.</li>
+    <li>To keep your QuickBooks connection active by refreshing access tokens.</li>
+    <li>To operate, maintain, and secure the App.</li>
+  </ul>
+  <p>We do <b>not</b> use your QuickBooks data for advertising, we do <b>not</b> sell it, and we do <b>not</b> share it with third parties except the infrastructure providers described below that are required to run the App.</p>
+
+  <h2>How data is stored and secured</h2>
+  <p>Business data and QuickBooks connection tokens are stored server-side in our hosting provider&rsquo;s managed storage (Netlify Blobs). Tokens are never exposed to the browser or embedded in the App&rsquo;s front-end. Data is transmitted over encrypted HTTPS connections. Access to the deployed environment is restricted to the account owner.</p>
+
+  <h2>Third-party services</h2>
+  <ul>
+    <li><b>Intuit / QuickBooks Online</b> — source of the accounting data you authorize. Governed by Intuit&rsquo;s own privacy policy.</li>
+    <li><b>Netlify</b> — hosting and server-side storage.</li>
+    <li><b>Anthropic (Claude)</b> — optional AI features; only the content you submit for a given request is sent, and financial connection tokens are never sent.</li>
+  </ul>
+
+  <h2>Disconnecting and data deletion</h2>
+  <p>You can disconnect QuickBooks at any time from within the App (Settings &rarr; Connections &rarr; QuickBooks) or from within QuickBooks Online itself (Apps &rarr; Manage &rarr; Disconnect). Disconnecting deletes the stored QuickBooks tokens from our storage. To request deletion of any remaining data associated with your account, contact us using the details below.</p>
+
+  <h2>Data retention</h2>
+  <p>We retain QuickBooks tokens only for as long as the connection is active. Business data you enter is retained until you delete it or request deletion.</p>
+
+  <h2>Children&rsquo;s privacy</h2>
+  <p>The App is a business tool and is not directed to children under 13, and we do not knowingly collect information from them.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>We may update this policy from time to time. Material changes will be reflected by the &ldquo;Last updated&rdquo; date above.</p>
+
+  <h2>Contact us</h2>
+  <p>Questions about this policy or your data: <a href="mailto:alan@goodworkhq.co">alan@goodworkhq.co</a>.</p>
+
+  <div class="note">This policy is a starting template describing how Good Work HQ actually handles QuickBooks data. Review it and adjust the company name, contact email, and any specifics before relying on it. It is not legal advice.</div>
+
+  <footer>&copy; 2026 Good Work HQ · <a href="/terms.html">Terms of Service</a> · <a href="/">Back to app</a></footer>
+</div>
+</body>
+</html>
