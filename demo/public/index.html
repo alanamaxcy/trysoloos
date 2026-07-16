@@ -1281,7 +1281,7 @@
   .tb-edate{ border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:4px 6px;font:inherit;font-size:11.5px;color:var(--ink2);width:124px }
   .tb-emin{ border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:4px 6px;font:inherit;font-size:12px;color:var(--ink);width:62px;text-align:right;font-variant-numeric:tabular-nums }
   .tb-eunit{ font-size:11px;color:var(--faint);font-weight:700 }
-  .tv-head,.tv-row{ display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 150px 118px 34px;gap:10px;align-items:center }
+  .tv-head,.tv-row{ display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,0.9fr) 124px 86px 86px 90px 30px;gap:9px;align-items:center }
   .tv-head{ font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);padding:0 0 8px;border-bottom:1px solid var(--line) }
   .tv-row{ padding:7px 0;border-bottom:1px solid var(--line) }
   .tv-row:last-child{ border-bottom:0 }
@@ -1292,6 +1292,11 @@
   .tv-sel{ width:100%;border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 8px;font:inherit;font-size:12.5px;color:var(--ink) }
   .tv-row input[type=date]{ width:100%;border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 8px;font:inherit;font-size:11.5px;color:var(--ink2) }
   .tv-row input[type=number]{ width:66px;border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 8px;font:inherit;font-size:12.5px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums }
+  .tv-row input[type=time]{ width:100%;border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 6px;font:inherit;font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums }
+  .tv-add{ display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line) }
+  .tv-add select,.tv-add input{ border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:7px 8px;font:inherit;font-size:12.5px;color:var(--ink) }
+  .tv-add input[type=time]{ font-variant-numeric:tabular-nums }
+  .tv-add .tv-add-lbl{ font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-right:2px }
   .tv-c4{ display:flex;align-items:center;gap:6px }
   .tv-del{ background:none;border:0;color:var(--faint);cursor:pointer;font-size:16px;line-height:1 }
   .tv-del:hover{ color:var(--accent-dark) }
@@ -2695,11 +2700,32 @@ function timeLoggedToday(){ if(!state)return 0; const d0=new Date(); d0.setHours
 function tbAutoStopHours(){ const h=(state.config&&state.config.timeAutoStopHours); return (h===0||h)?+h:2; }
 function tlSetDate(e,ds){ if(!/^\d{4}-\d{2}-\d{2}$/.test(ds||""))return; const old=new Date(e.start); const p=ds.split("-").map(Number);
   const d=new Date(p[0],p[1]-1,p[2],old.getHours(),old.getMinutes(),0,0); e.start=d.getTime(); e.end=e.start+(e.seconds||0)*1000; e.date=ds; }
+/* time-of-day helpers: format a timestamp to "HH:MM" and stamp a "HH:MM" onto an entry's day */
+function _hm(ms){ const d=new Date(ms); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function _todMs(baseMs,hm){ if(!/^\d{1,2}:\d{2}$/.test(hm||""))return baseMs; const d=new Date(baseMs); const pp=hm.split(":"); d.setHours(+pp[0],+pp[1],0,0); return d.getTime(); }
+/* editing Start keeps the duration and shifts the block; editing End recomputes the duration (fixes a forgotten stop). Rolls past midnight so 11pm-1am works. */
+function _applyTimes(e,patch){
+  if(patch.start!=null){ e.start=_todMs(e.start,patch.start); e.end=e.start+(e.seconds||0)*1000; if(e.date)e.date=fmtDateKey(new Date(e.start)); }
+  if(patch.end!=null){ let end=_todMs(e.start,patch.end); let diff=end-e.start; if(diff<0)diff+=86400000; e.seconds=Math.round(diff/1000); e.end=e.start+diff; }
+}
 function tlUpdate(id,patch){ const e=(state.timeLog||[]).find(x=>x.id===id); if(!e)return null;
   if(patch.bucketId&&patch.bucketId!==e.bucketId){ const b=bucketById(patch.bucketId); e.bucketId=patch.bucketId; e.name=(b&&b.name)||""; e.projectId=(b&&b.projectId)||null; }
   if(patch.mins!=null){ const m=Math.max(0,Math.round(+patch.mins||0)); e.seconds=m*60; e.end=e.start+e.seconds*1000; }
   if(patch.date)tlSetDate(e,patch.date);
+  _applyTimes(e,patch);
   save(); return e; }
+/* add a manual bucket entry from date + start/end clock times */
+function addManualTimeEntry(bucketId,dateStr,startHM,endHM){
+  if(!bucketId){ toast("Pick a bucket first"); return false; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateStr||"")){ toast("Pick a date"); return false; }
+  if(!/^\d{1,2}:\d{2}$/.test(startHM||"")||!/^\d{1,2}:\d{2}$/.test(endHM||"")){ toast("Enter a start and end time"); return false; }
+  const p=dateStr.split("-").map(Number); const base=new Date(p[0],p[1]-1,p[2],0,0,0,0).getTime();
+  const start=_todMs(base,startHM); let end=_todMs(base,endHM); let diff=end-start; if(diff<0)diff+=86400000;
+  if(diff<=0){ toast("End time must be after the start time"); return false; }
+  const bk=bucketById(bucketId);
+  state.timeLog=state.timeLog||[];
+  state.timeLog.push({id:uid(),bucketId,name:(bk&&bk.name)||"",projectId:(bk&&bk.projectId)||null,start,end:start+diff,seconds:Math.round(diff/1000),date:dateStr,user:currentUser,manual:true});
+  save(); return true; }
 let _autoStopBusy=false;
 async function checkLongTimer(){
   if(_autoStopBusy)return;
@@ -5285,6 +5311,7 @@ function taskEntryUpdate(projId,taskId,eid,patch){
   if(patch.mins!=null){ e.seconds=Math.max(0,Math.round(+patch.mins||0))*60; e.end=e.start+e.seconds*1000; }
   if(patch.date&&/^\d{4}-\d{2}-\d{2}$/.test(patch.date)){ const old=new Date(e.start); const p=patch.date.split("-").map(Number);
     const d=new Date(p[0],p[1]-1,p[2],old.getHours(),old.getMinutes(),0,0); e.start=d.getTime(); e.end=e.start+(e.seconds||0)*1000; }
+  _applyTimes(e,patch);
   save();
 }
 function taskEntryDelete(projId,taskId,eid){ const t=findTask(projId,taskId); if(!t)return; t.timeEntries=(t.timeEntries||[]).filter(x=>x.id!==eid); save(); }
@@ -5294,8 +5321,8 @@ function timeVisibleRows(){
   return allTimeEntries().filter(e=>e.start>=lo&&e.start<hi).filter(e=>!bf||(e.kind==="bucket"&&e.bucketId===bf));
 }
 function exportTimeCSV(){
-  const rows=[["Date","What","Where","Type","Minutes","Hours"]];
-  timeVisibleRows().forEach(e=>rows.push([e.date,e.label,e.sub,e.kind==="task"?"Task timer":"Bucket",Math.round(e.seconds/60),_round2(e.seconds/3600).toFixed(2)]));
+  const rows=[["Date","What","Where","Type","Start","End","Minutes","Hours"]];
+  timeVisibleRows().forEach(e=>rows.push([e.date,e.label,e.sub,e.kind==="task"?"Task timer":"Bucket",_hm(e.start),_hm(e.start+(e.seconds||0)*1000),Math.round(e.seconds/60),_round2(e.seconds/3600).toFixed(2)]));
   if(rows.length===1){ toast("Nothing to export in this range"); return; }
   dl("good-work-time.csv",rows.map(csvRow).join("\n"));
 }
@@ -5440,12 +5467,16 @@ function renderTime(m){
       : `<span class="tv-name"><span class="tv-dot" style="background:${e.color}"></span>${esc(e.label)}</span>`;
     const where=isB?`<span class="tv-where">${esc(e.sub)}</span>`:`<span class="tv-where">${esc(e.sub)} \u00b7 task timer</span>`;
     const dsAttr=isB?`data-tvdate="${e.id}"`:`data-tvtdate="${e.projectId}|${e.taskId}|${e.id}"`;
+    const stAttr=isB?`data-tvstart="${e.id}"`:`data-tvtstart="${e.projectId}|${e.taskId}|${e.id}"`;
+    const enAttr=isB?`data-tvend="${e.id}"`:`data-tvtend="${e.projectId}|${e.taskId}|${e.id}"`;
     const mnAttr=isB?`data-tvmin="${e.id}"`:`data-tvtmin="${e.projectId}|${e.taskId}|${e.id}"`;
     const dlAttr=isB?`data-tvdel="${e.id}"`:`data-tvtdel="${e.projectId}|${e.taskId}|${e.id}"`;
     return `<div class="tv-row">
       <div class="tv-c1">${what}</div>
       <div class="tv-c2">${where}</div>
       <div class="tv-c3"><input type="date" ${dsAttr} value="${esc(e.date)}"></div>
+      <div><input type="time" ${stAttr} value="${_hm(e.start)}" title="Start time"></div>
+      <div><input type="time" ${enAttr} value="${_hm(e.start+(e.seconds||0)*1000)}" title="End time"></div>
       <div class="tv-c4"><input type="number" min="0" step="1" ${mnAttr} value="${Math.round(e.seconds/60)}"><span class="tb-eunit">min</span></div>
       <div class="tv-c5"><button class="tv-del" ${dlAttr} title="Delete entry">\u00d7</button></div>
     </div>`; }).join("");
@@ -5465,19 +5496,33 @@ function renderTime(m){
     </div>
     <div class="panel"><div class="panel-head"><h3>Entries</h3><span class="spacer"></span><span class="ml-tag" style="font-weight:800">${fmtDur(total)}</span></div>
       <div class="panel-body">
-        ${rows.length?`<div class="tv-head"><div class="tv-c1">What</div><div class="tv-c2">Where</div><div class="tv-c3">Date</div><div class="tv-c4">Time</div><div class="tv-c5"></div></div>${entryRows}${rows.length>300?'<div class="rsub" style="margin-top:8px">Showing the 300 most recent entries.</div>':""}`
-          :`<div class="empty-mini">No time logged in this range. Click a bucket in the top bar to start.</div>`}
+        <div class="tv-add">
+          <span class="tv-add-lbl">Add entry</span>
+          <select id="tvAddBucket">${bsel}</select>
+          <input id="tvAddDate" type="date" value="${todayStr()}">
+          <input id="tvAddStart" type="time" value="09:00" title="Start time">
+          <span style="color:var(--faint)">→</span>
+          <input id="tvAddEnd" type="time" value="10:00" title="End time">
+          <button class="btn btn-ghost btn-sm" id="tvAddBtn">+ Add</button>
+        </div>
+        ${rows.length?`<div class="tv-head"><div class="tv-c1">What</div><div class="tv-c2">Where</div><div class="tv-c3">Date</div><div>Start</div><div>End</div><div class="tv-c4">Time</div><div class="tv-c5"></div></div>${entryRows}${rows.length>300?'<div class="rsub" style="margin-top:8px">Showing the 300 most recent entries.</div>':""}`
+          :`<div class="empty-mini">No time logged in this range yet. Add one above, or click a bucket in the top bar to start a timer.</div>`}
       </div></div>`;
   bindIcsSuggest(m);
   m.querySelectorAll("[data-tvb]").forEach(sel=>{ const e=(state.timeLog||[]).find(x=>x.id===sel.dataset.tvb); if(e&&bucketById(e.bucketId))sel.value=e.bucketId;
     sel.addEventListener("change",()=>{ tlUpdate(sel.dataset.tvb,{bucketId:sel.value}); renderTime(m); }); });
   m.querySelectorAll("[data-tvdate]").forEach(i=>i.addEventListener("change",()=>{ tlUpdate(i.dataset.tvdate,{date:i.value}); renderTime(m); }));
+  m.querySelectorAll("[data-tvstart]").forEach(i=>i.addEventListener("change",()=>{ tlUpdate(i.dataset.tvstart,{start:i.value}); renderTime(m); renderTimeStrip(); }));
+  m.querySelectorAll("[data-tvend]").forEach(i=>i.addEventListener("change",()=>{ tlUpdate(i.dataset.tvend,{end:i.value}); renderTime(m); renderTimeStrip(); }));
   m.querySelectorAll("[data-tvmin]").forEach(i=>i.addEventListener("change",()=>{ tlUpdate(i.dataset.tvmin,{mins:i.value}); renderTime(m); }));
   m.querySelectorAll("[data-tvdel]").forEach(b=>b.addEventListener("click",()=>{ state.timeLog=(state.timeLog||[]).filter(x=>x.id!==b.dataset.tvdel); save(); renderTime(m); renderTimeStrip(); }));
   const tsplit=v=>v.split("|");
   m.querySelectorAll("[data-tvtdate]").forEach(i=>i.addEventListener("change",()=>{ const p=tsplit(i.dataset.tvtdate); taskEntryUpdate(p[0],p[1],p[2],{date:i.value}); renderTime(m); }));
+  m.querySelectorAll("[data-tvtstart]").forEach(i=>i.addEventListener("change",()=>{ const p=tsplit(i.dataset.tvtstart); taskEntryUpdate(p[0],p[1],p[2],{start:i.value}); renderTime(m); }));
+  m.querySelectorAll("[data-tvtend]").forEach(i=>i.addEventListener("change",()=>{ const p=tsplit(i.dataset.tvtend); taskEntryUpdate(p[0],p[1],p[2],{end:i.value}); renderTime(m); }));
   m.querySelectorAll("[data-tvtmin]").forEach(i=>i.addEventListener("change",()=>{ const p=tsplit(i.dataset.tvtmin); taskEntryUpdate(p[0],p[1],p[2],{mins:i.value}); renderTime(m); }));
   m.querySelectorAll("[data-tvtdel]").forEach(b=>b.addEventListener("click",()=>{ const p=tsplit(b.dataset.tvtdel); taskEntryDelete(p[0],p[1],p[2]); renderTime(m); }));
+  { const ab=m.querySelector("#tvAddBtn"); if(ab)ab.addEventListener("click",()=>{ if(addManualTimeEntry(m.querySelector("#tvAddBucket").value,m.querySelector("#tvAddDate").value,m.querySelector("#tvAddStart").value,m.querySelector("#tvAddEnd").value)){ renderTime(m); renderTimeStrip(); toast("Entry added"); } }); }
 }
 function renderReports(m){
   setHead("Workspace","Reports","Live metrics across your pipeline and work",`<button class="btn btn-ghost btn-sm" onclick="openExportMenu(this,'pipeline')">Export pipeline</button>`);
