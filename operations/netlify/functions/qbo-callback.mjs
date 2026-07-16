@@ -5,11 +5,22 @@ export default async (req) => {
   const u = new URL(req.url);
   const code = u.searchParams.get("code");
   const realmId = u.searchParams.get("realmId");
+  const returnedState = u.searchParams.get("state");
   const clientId = process.env.QBO_CLIENT_ID;
   const secret = process.env.QBO_CLIENT_SECRET;
   const redirect = process.env.QBO_REDIRECT_URI;
   if (!clientId || !secret || !redirect) return new Response("QuickBooks environment variables are missing.", { status: 500 });
   if (!code || !realmId) return new Response("Missing code or realmId from QuickBooks.", { status: 400 });
+  // CSRF protection: the state returned by Intuit must match the one this app set
+  // in the qbo_state cookie when the flow started. A mismatch means the callback
+  // was not initiated by us, so reject it.
+  const cookieHeader = req.headers.get("cookie") || "";
+  const cookieMatch = cookieHeader.match(/(?:^|;\s*)qbo_state=([^;]+)/);
+  const expectedState = cookieMatch ? cookieMatch[1] : "";
+  if (!expectedState || !returnedState || expectedState !== returnedState) {
+    return new Response("QuickBooks authorization could not be verified (state mismatch). Please start the connection again.", { status: 400 });
+  }
+  const clearState = "qbo_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
   try {
     const basic = Buffer.from(clientId + ":" + secret).toString("base64");
     const r = await fetch("https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer", {
@@ -33,7 +44,7 @@ export default async (req) => {
       obtained: Date.now(),
       expires_in: tok.expires_in,
     });
-    return new Response(null, { status: 302, headers: { location: "/?qbo=connected" } });
+    return new Response(null, { status: 302, headers: { location: "/?qbo=connected", "set-cookie": clearState } });
   } catch (e) {
     return new Response("QuickBooks callback error: " + String(e), { status: 500 });
   }
