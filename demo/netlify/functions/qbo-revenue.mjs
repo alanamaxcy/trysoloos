@@ -9,8 +9,13 @@ async function refresh(store, tok, clientId, secret) {
     headers: { authorization: "Basic " + basic, "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(tok.refresh_token),
   });
+  const tid = r.headers.get("intuit_tid") || "";
   const nt = await r.json();
-  if (nt.error) throw new Error(nt.error_description || nt.error);
+  if (nt.error) {
+    // Log with Intuit's transaction id (intuit_tid) so failures can be traced in support.
+    console.error("[qbo] token refresh failed", { status: r.status, intuit_tid: tid, error: nt.error, description: nt.error_description });
+    throw new Error(nt.error_description || nt.error);
+  }
   const merged = { ...tok, access_token: nt.access_token, refresh_token: nt.refresh_token || tok.refresh_token, obtained: Date.now(), expires_in: nt.expires_in };
   await store.setJSON("qbo", merged);
   return merged;
@@ -31,7 +36,12 @@ export default async (req) => {
     const url = base + "/v3/company/" + tok.realmId + "/reports/ProfitAndLoss?start_date=" + year + "-01-01&end_date=" + year + "-12-31&minorversion=70";
     let r = await fetch(url, { headers: { authorization: "Bearer " + tok.access_token, accept: "application/json" } });
     if (r.status === 401) { tok = await refresh(store, tok, clientId, secret); r = await fetch(url, { headers: { authorization: "Bearer " + tok.access_token, accept: "application/json" } }); }
-    if (!r.ok) return json({ error: "QuickBooks report returned " + r.status });
+    // Capture Intuit's transaction id from the response so any failure can be traced in support.
+    const tid = r.headers.get("intuit_tid") || "";
+    if (!r.ok) {
+      console.error("[qbo] report request failed", { status: r.status, intuit_tid: tid, realmId: tok.realmId });
+      return json({ error: "QuickBooks report returned " + r.status, intuit_tid: tid });
+    }
     const rep = await r.json();
     let income = 0;
     const walk = (rows) => {
@@ -52,6 +62,7 @@ export default async (req) => {
     walk(rep.Rows);
     return json({ revenue: Math.round(income), year, source: "QuickBooks Profit & Loss" });
   } catch (e) {
+    console.error("[qbo] revenue sync error", { error: String(e) });
     return json({ error: String(e) });
   }
 };

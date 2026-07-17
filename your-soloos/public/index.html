@@ -4062,9 +4062,28 @@ function seedFields(bt){ const u=()=>uid();
 }
 
 /* ---- board/view/custom-field helpers ---- */
-function boardViews(bt){ return state.boards[bt].views; }
+function isProjBoard(bt){ return typeof bt==="string" && bt.indexOf("tasks::")===0; }
+/* Each project gets its own board so column choices, widths, order, group/sort and
+   views are independent. Seeded from the shared "tasks" template on first open, so an
+   existing project looks identical to today, then diverges. Custom field *definitions*
+   stay shared (state.config.cfields by scope) — only the column layout is per-project. */
+function ensureProjBoard(bt){
+  if(!state.boards) state.boards={};
+  if(state.boards[bt]) return state.boards[bt];
+  const base=state.boards.tasks;
+  const b=state.boards[bt]=base?JSON.parse(JSON.stringify(base)):{fields:[],views:[],groupOrder:{},colW:{}};
+  if(!Array.isArray(b.views)||!b.views.length){ const seed=(typeof seedBoards==="function"&&seedBoards().tasks)||{}; b.views=JSON.parse(JSON.stringify(seed.views||[])); }
+  if(!Array.isArray(b.fields)) b.fields=[];
+  if(!b.groupOrder) b.groupOrder={};
+  if(!b.colW) b.colW={};
+  delete b._seeded;
+  b.views.forEach(v=>{ if(!v.filters)v.filters={}; ["assignee","status","priority","stage","due"].forEach(k=>{ if(!Array.isArray(v.filters[k]))v.filters[k]=[]; }); if(!Array.isArray(v.hidden))v.hidden=[]; if(!v.type)v.type="list"; });
+  return b;
+}
+function redrawBoard(bt){ if(bt==="pipeline")return drawPipe(); if(bt==="todos")return drawTodos(); if(bt==="goals")return drawGoals(); if(curProj)drawProj(curProj); }
+function boardViews(bt){ if(isProjBoard(bt))ensureProjBoard(bt); return state.boards[bt].views; }
 function activeView(bt){ const st=lvState(bt); let v=boardViews(bt).find(x=>x.id===st.activeViewId); if(!v){v=boardViews(bt)[0];st.activeViewId=v.id;} return v; }
-function boardFields(bt){ return state.boards[bt].fields; }
+function boardFields(bt){ if(isProjBoard(bt))ensureProjBoard(bt); return state.boards[bt].fields; }
 function cfScope(bt){ return bt==="pipeline"?"pipeline":bt==="people"?"people":"work"; }
 function _cfMigrate(){ state.config=state.config||{}; if(state.config.cfields)return; const seen={}; const ded=(...ls)=>{const o=[];ls.forEach(l=>(l||[]).forEach(f=>{if(f&&f.id&&!seen[f.id]){seen[f.id]=1;o.push(f);}}));return o;}; const b=state.boards||{}; const work=ded(b.todos&&b.todos.fields,b.tasks&&b.tasks.fields,b.goals&&b.goals.fields); const pipeline=ded(b.pipeline&&b.pipeline.fields); ((state.config.customFields)||[]).forEach(f=>{ if(f&&f.id&&!seen[f.id]){ seen[f.id]=1; work.push(f); } }); state.config.cfields={work:work,pipeline:pipeline,people:[]}; }
 function cfPool(scope){ scope=cfScope(scope); state.config=state.config||{}; _cfMigrate(); if(!state.config.cfields[scope])state.config.cfields[scope]=[]; return state.config.cfields[scope]; }
@@ -4183,7 +4202,7 @@ function todoCfg(){ const bt="todos"; return {
   deleteSelected:sel=>{ state.todos=state.todos.filter(t=>!sel.has(t.id)); state.projects.forEach(p=>{p.tasks=(p.tasks||[]).filter(t=>!sel.has(t.id));}); save(); },
   bulkActions:[{id:"bs",label:"Status",options:TODO_STATUS,apply:(it,k)=>{ if(srcInfo(it).src==="project"){ const set=statusSetFor(it); if(set.some(s=>s.key===k)){it.status=k;} else { const kind=(TODO_STATUS.find(s=>s.key===k)||{}).kind||"open"; it.status=(set.find(s=>s.kind===kind)||set[0]).key; } } else { it.status=k; } }},{id:"bp",label:"Priority",options:PRIORITIES,apply:(it,k)=>it.priority=k},{id:"ba",label:"Assignee",options:[{key:"",label:"Unassigned"}].concat(userOpts()),apply:(it,k)=>it.assignee=k}]
 };}
-function projCfg(proj){ const bt="tasks"; return {
+function projCfg(proj){ const bt="tasks::"+proj.id; ensureProjBoard(bt); return {
   sectionOps:{rename:k=>projSectionRename(proj.id,k),remove:k=>projSectionDelete(proj.id,k)},
   boardType:bt, subtasks:true, items:projSearchFiltered(proj), ganttEnd:it=>it.dueDate||"",
   columns:[colStatus(TASK_STATUS),colCategory(bt,"Section"),colName,colAssignee(),colProgress,colDue,colPriority,colTime,colTimer(proj.id)].concat(customCols(bt)),
@@ -4220,7 +4239,7 @@ function applyGroupField(it,gb,gk){ if(!gb||gk==null)return; if(gb.setField){gb.
 function colCategory(bt,label){ return { id:"category",label:label||"Category",width:"130px",
   cell:it=>`<button class="pill pill-btn" data-f="cat" style="background:var(--side);color:var(--ink2)">${esc(it.category||"—")}</button>`,
   bind:(row,it,cfg)=>row.querySelector('[data-f="cat"]').addEventListener("click",e=>{ const cats=catsFor(bt); openMenu(e.currentTarget,cats.map(c=>({key:c,label:c})),it.category||"",k=>{it.category=k;save();cfg.rerender();}); }) }; }
-function catsFor(bt){ if(bt==="todos")return [...new Set(["Task","Backburner","Client work","Sales",...state.todos.filter(t=>!isGoalCat(t.category)).map(t=>t.category).filter(Boolean),...pendingTodoSections])].filter(c=>c&&c!=="Today"); if(bt==="tasks"&&curProj)return projCats(curProj); return []; }
+function catsFor(bt){ if(bt==="todos")return [...new Set(["Task","Backburner","Client work","Sales",...state.todos.filter(t=>!isGoalCat(t.category)).map(t=>t.category).filter(Boolean),...pendingTodoSections])].filter(c=>c&&c!=="Today"); if((bt==="tasks"||isProjBoard(bt))&&curProj)return projCats(curProj); return []; }
 /* rotting indicator column (pipeline) */
 const colRot={ id:"rot",label:"Health",width:"96px",
   cell:it=>{ if(!ACTIVE_STAGES.includes(it.stage)||leadInactive(it))return `<span class="t-time"></span>`; const ds=daysSince(it.lastContact); if(ds!=null&&ds>=21)return `<span class="rotting">● ${ds}d cold</span>`; if(it.nextFollowUp&&daysSince(it.nextFollowUp)>0)return `<span class="rotting">● overdue</span>`; return `<span class="stat-pill" style="background:var(--ok-soft);color:var(--ok)">● active</span>`; }, bind:()=>{} };
@@ -4491,8 +4510,8 @@ function openFilterPanel3(cfg,v){
   paint(); placePanel(p,'.lc-ctrl[data-c="filter"]');
 }
 /* view add/delete */
-async function addView(bt){ const name=await promptModal("New view name:","View "+(boardViews(bt).length+1)); if(!name)return; const v=defView({name:name.trim(),type:"list",groupBy:(boardViews(bt)[0]||{}).groupBy||"category"}); state.boards[bt].views.push(v); lvState(bt).activeViewId=v.id; save(); ({pipeline:drawPipe,todos:drawTodos,tasks:()=>curProj&&drawProj(curProj)})[bt](); }
-async function delView(bt,id){ if(boardViews(bt).length<=1)return; if(!await confirmModal("Delete this view?"))return; state.boards[bt].views=boardViews(bt).filter(x=>x.id!==id); lvState(bt).activeViewId=boardViews(bt)[0].id; save(); ({pipeline:drawPipe,todos:drawTodos,tasks:()=>curProj&&drawProj(curProj)})[bt](); }
+async function addView(bt){ const name=await promptModal("New view name:","View "+(boardViews(bt).length+1)); if(!name)return; const v=defView({name:name.trim(),type:"list",groupBy:(boardViews(bt)[0]||{}).groupBy||"category"}); state.boards[bt].views.push(v); lvState(bt).activeViewId=v.id; save(); redrawBoard(bt); }
+async function delView(bt,id){ if(boardViews(bt).length<=1)return; if(!await confirmModal("Delete this view?"))return; state.boards[bt].views=boardViews(bt).filter(x=>x.id!==id); lvState(bt).activeViewId=boardViews(bt)[0].id; save(); redrawBoard(bt); }
 
 /* ================= KANBAN (generic) ================= */
 function kanbanHtml(cfg,v){

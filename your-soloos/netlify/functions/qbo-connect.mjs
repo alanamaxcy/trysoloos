@@ -11,7 +11,10 @@ export default async (req) => {
       { status: 200, headers: { "content-type": "text/plain" } }
     );
   }
-  const state = Math.random().toString(36).slice(2);
+  // CSRF protection: generate a random state, send it to Intuit, and also stash
+  // it in a short-lived HttpOnly cookie. qbo-callback verifies the two match, so
+  // a forged callback (one this app didn't initiate) is rejected.
+  const state = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
   const auth =
     "https://appcenter.intuit.com/connect/oauth2" +
     "?client_id=" + encodeURIComponent(clientId) +
@@ -19,6 +22,7 @@ export default async (req) => {
     "&scope=" + encodeURIComponent("com.intuit.quickbooks.accounting") +
     "&redirect_uri=" + encodeURIComponent(redirect) +
     "&state=" + state;
-  return new Response(null, { status: 302, headers: { location: auth } });
+  const cookie = "qbo_state=" + state + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600";
+  return new Response(null, { status: 302, headers: { location: auth, "set-cookie": cookie } });
 };
 export const config = { path: "/api/qbo-connect" };
