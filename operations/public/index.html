@@ -1465,6 +1465,21 @@
   .tls-gap{ display:flex;align-items:center;gap:9px;padding:3px 11px;color:var(--muted);font-size:10.5px;font-weight:700;cursor:pointer }
   .tls-gap:hover{ color:var(--accent) } .tls-gap .ln{ flex:1;border-top:1px dashed var(--line2) }
   @media(max-width:560px){ .tls-row{ grid-template-columns:1fr auto } .tls-time{ display:none } }
+  /* finance dashboard */
+  .fin-kpis{ display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px }
+  @media(max-width:720px){ .fin-kpis{ grid-template-columns:repeat(2,1fr) } }
+  .fin-kpi{ background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 16px }
+  .fin-kpi .l{ font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
+  .fin-kpi .v{ font-family:var(--disp);font-size:27px;font-weight:800;margin-top:3px;line-height:1.1 }
+  .fin-kpi .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:2px }
+  .fin-legend{ display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--ink2) }
+  .fin-legend i{ display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px }
+  .fin-fc{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 4px }
+  @media(max-width:640px){ .fin-fc{ grid-template-columns:1fr } }
+  .fin-fc .box{ background:var(--side);border:1px solid var(--line);border-radius:11px;padding:11px 13px }
+  .fin-fc .box .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted) }
+  .fin-fc .box .v{ font-family:var(--disp);font-size:21px;font-weight:800;margin-top:2px }
+  .fin-fc .box .s{ font-size:11px;color:var(--ink2);font-weight:600;margin-top:1px }
   #tbMBucket{ flex:1;min-width:0;border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 9px;font:inherit;font-size:13px;color:var(--ink) }
   #tbMMin{ width:104px;flex:0 0 104px }
   .tu-search svg{ width:15px;height:15px;flex-shrink:0 }
@@ -5164,6 +5179,7 @@ const NAV3=[
   {view:"dashboard",label:"Dashboard",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>'},
   {view:"assistant",label:"Assistant",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 0 1-12.9 7.3L3 20l1.3-4.1A8.5 8.5 0 1 1 21 11.5z"/><path d="M9.5 10.5l1 2 1-2 2-1-2-1-1-2-1 2-2 1z"/></svg>'},
   {view:"reports",label:"Reports",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>'},
+  {view:"finance",label:"Finance",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15v-4M11.5 15V8M16 15v-6M20 15v-9"/></svg>'},
   {view:"time",label:"Time",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'},
   {view:"calendar",label:"Calendar",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>'},
   {view:"myday",label:"My Day",icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>'},
@@ -5208,6 +5224,7 @@ function render(){
   if(view==="dashboard"){ setHead("Workspace","Dashboard","Welcome back, "+USERS[currentUser].short,""); m.innerHTML=renderDashboard(); }
   else if(view==="assistant") renderAssistant(m);
   else if(view==="reports") renderReports(m);
+  else if(view==="finance") renderFinance(m);
   else if(view==="time") renderTime(m);
   else if(view==="calendar") renderGlobalCalendar(m);
   else if(view==="pipeline") renderPipeline(m);
@@ -5610,6 +5627,96 @@ function renderTime(m){
   m.querySelectorAll("[data-tlt]").forEach(el=>el.addEventListener("click",()=>{ const p=el.dataset.tlt.split("|"); const t=findTask(p[0],p[1]); const e=t&&(t.timeEntries||[]).find(x=>x.id===p[2]); if(!e)return; const proj=(state.projects||[]).find(x=>x.id===p[0]); openEntryEditor({mode:"edit",kind:"task",projectId:p[0],taskId:p[1],id:p[2],label:t.name||"",sub:(proj&&proj.name)||"",color:"#2C3E50",startMin:_tlMin(e.start),mins:Math.max(1,Math.round(e.seconds/60))}); }));
   m.querySelectorAll("[data-tlgap]").forEach(el=>el.addEventListener("click",()=>{ const p=el.dataset.tlgap.split("|").map(Number); const b=(state.timeBuckets||[])[0]||{}; openEntryEditor({mode:"new",kind:"bucket",bucketId:b.id,label:b.name||"",sub:"bucket",color:b.color||"#94a0ac",startMin:p[0],mins:Math.max(15,p[1]-p[0])}); }));
   { const ab=m.querySelector("#tvAddBtn"); if(ab)ab.addEventListener("click",()=>{ if(addManualTimeEntry(m.querySelector("#tvAddBucket").value,m.querySelector("#tvAddDate").value,m.querySelector("#tvAddStart").value,m.querySelector("#tvAddEnd").value)){ renderTime(m); renderTimeStrip(); toast("Entry added"); } }); }
+}
+/* ===== FINANCE DASHBOARD ===== */
+function finActiveMonths(f){ const all=(f&&f.months)||[]; let last=-1; all.forEach((m,i)=>{ if(m.income||m.expenses||m.netProfit)last=i; }); return last>=0?all.slice(0,last+1):[]; }
+function finIncExpChart(months){
+  const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
+  const W=680,H=210,padL=52,padR=10,padT=12,padB=30, pw=W-padL-padR, ph=H-padT-padB;
+  const max=Math.max(1,...months.map(m=>Math.max(m.income,m.expenses)));
+  const gw=pw/n, bw=Math.min(15,gw*0.3);
+  const y=v=>padT+ph-(v/max)*ph;
+  const grid=[0,0.5,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${money(Math.round(v))}</text>`; }).join("");
+  let bars="";
+  months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1;
+    bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61"><title>${esc(m.month)} · income ${money(m.income)}</title></rect>`;
+    bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55"><title>${esc(m.month)} · expenses ${money(m.expenses)}</title></rect>`;
+    bars+=`<text x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span><i style="background:#5e8c61"></i>Income</span><span><i style="background:#CB6E55"></i>Expenses</span></div>`;
+}
+function finCumNetChart(months){
+  const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
+  let cum=0; const pts=months.map(m=>({month:m.month,cum:cum+=(m.netProfit||0)}));
+  const W=680,H=190,padL=52,padR=10,padT=12,padB=28, pw=W-padL-padR, ph=H-padT-padB;
+  const vals=pts.map(p=>p.cum); const max=Math.max(1,...vals,0), min=Math.min(0,...vals), range=Math.max(1,max-min);
+  const x=i=>padL+(n<=1?pw/2:(i/(n-1))*pw), y=v=>padT+ph-((v-min)/range)*ph;
+  const line=pts.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(p.cum).toFixed(1)}`).join(" ");
+  const area=`M${x(0).toFixed(1)},${y(min).toFixed(1)} `+pts.map((p,i)=>`L${x(i).toFixed(1)},${y(p.cum).toFixed(1)}`).join(" ")+` L${x(n-1).toFixed(1)},${y(min).toFixed(1)} Z`;
+  const zeroY=y(0).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">
+    <line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="var(--line2)" stroke-dasharray="3 3"/>
+    <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" fill="var(--muted)">$0</text>
+    <path d="${area}" fill="color-mix(in srgb,#5b7fa6 15%,transparent)"/>
+    <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.5"/>
+    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6"><title>${esc(p.month)} · cumulative net ${money(Math.round(p.cum))}</title></circle>`).join("")}
+    ${pts.map((p,i)=>`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((p.month||"").slice(0,3))}</text>`).join("")}
+  </svg>`;
+}
+function renderFinance(m){
+  const f=(state.meta&&state.meta.financials)||null;
+  const connected=!!(state.connections&&state.connections.quickbooks);
+  setHead("Workspace","Finance","Your money at a glance — live from QuickBooks",
+    `<button class="btn btn-ghost btn-sm" onclick="qboSyncRevenue(this)">Sync from QuickBooks</button>`);
+  if(!f||f.income==null){
+    m.innerHTML=`<div class="rep-card rep-full"><h3>Connect your books</h3><div class="rsub" style="margin-bottom:10px">This dashboard turns your QuickBooks Profit &amp; Loss into income, expenses, profit, and a year-end forecast.</div>
+      <p style="font-size:13.5px;color:var(--ink2);line-height:1.55">${connected?"You're connected — click <b>Sync from QuickBooks</b> above to pull your latest numbers.":"Go to <b>Settings &rarr; Connections &rarr; QuickBooks</b>, click <b>Connect</b>, then <b>Sync revenue</b>. Your financials will appear here."}</p></div>`;
+    return;
+  }
+  const now=new Date();
+  const monthsElapsed=(f.year&&f.year===now.getFullYear())?(now.getMonth()+1):12;
+  const months=finActiveMonths(f);
+  const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
+  const projIncome=Math.round(f.income/monthsElapsed*12);
+  const projNet=(f.netProfit!=null)?Math.round(f.netProfit/monthsElapsed*12):null;
+  const avgIncome=Math.round(f.income/monthsElapsed);
+  const avgBurn=(f.expenses!=null)?Math.round(f.expenses/monthsElapsed):null;
+  const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
+  const goalPct=goal?Math.min(100,Math.round(f.income/goal*100)):0;
+  const projPct=goal?Math.round(projIncome/goal*100):0;
+  const gap=goal?projIncome-goal:0;
+  const opex=(f.expenses!=null&&f.cogs!=null)?(f.expenses-f.cogs):null;
+  const when=f.syncedAt?new Date(f.syncedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+  const kpi=(l,v,mm,col)=>`<div class="fin-kpi"><div class="l">${l}</div><div class="v" style="${col?`color:${col}`:""}">${v}</div><div class="m">${mm||""}</div></div>`;
+  m.innerHTML=`
+  <div class="rsub" style="margin:-4px 0 12px">${f.year||now.getFullYear()} year-to-date · ${monthsElapsed} month${monthsElapsed===1?"":"s"} in${when?" · synced "+esc(when):""}</div>
+  <div class="fin-kpis">
+    ${kpi("Income",money(f.income),"revenue booked","#3f7d5a")}
+    ${kpi("Expenses",money(f.expenses),avgBurn!=null?("~"+money(avgBurn)+"/mo"):"","#CB6E55")}
+    ${kpi("Net profit",money(f.netProfit),margin+"% margin",f.netProfit>=0?"#3f7d5a":"#c1604a")}
+    ${kpi("Avg monthly income",money(avgIncome),"run rate","#5b7fa6")}
+  </div>
+  <div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Forecast to year-end</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">run-rate from ${monthsElapsed} mo</span></div>
+    <div class="rsub">If the rest of ${f.year||now.getFullYear()} looks like your average month so far.</div>
+    <div class="fin-fc">
+      <div class="box"><div class="l">Projected income</div><div class="v">${money(projIncome)}</div><div class="s">${goal?(projPct+"% of "+money(goal)+" goal"):"set a goal in Reports"}</div></div>
+      <div class="box"><div class="l">Projected net profit</div><div class="v" style="color:${(projNet==null||projNet>=0)?"#3f7d5a":"#c1604a"}">${projNet==null?"—":money(projNet)}</div><div class="s">at ${margin}% margin</div></div>
+      <div class="box"><div class="l">${gap>=0?"Projected over goal":"Projected gap to goal"}</div><div class="v" style="color:${gap>=0?"#3f7d5a":"#c1604a"}">${goal?money(Math.abs(gap)):"—"}</div><div class="s">${goal?(gap>=0?"ahead of pace":"behind pace"):""}</div></div>
+    </div>
+    ${goal?`<div class="rsub" style="margin:10px 0 4px">Income vs ${money(goal)} goal — ${goalPct}% there</div><div style="height:12px;background:var(--side);border-radius:7px;overflow:hidden"><div style="height:100%;width:${goalPct}%;background:linear-gradient(90deg,#CB6E55,#D9A05B);border-radius:7px"></div></div>`:""}
+  </div>
+  <div class="rep-grid">
+    <div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div>${finIncExpChart(months)}</div>
+    <div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div>${finCumNetChart(months)}</div>
+  </div>
+  <div class="rep-grid">
+    <div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div>${chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(r=>r.value>0),money(f.income))}</div>
+    <div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>
+      ${months.map(mo=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">${esc((mo.month||"").slice(0,3))}</span><span style="text-align:right;color:var(--ink2)">${money(mo.income)}</span><span style="text-align:right;color:var(--ink2)">${money(mo.expenses)}</span><span style="text-align:right;font-weight:800;color:${mo.netProfit>=0?"#3f7d5a":"#c1604a"}">${money(mo.netProfit)}</span></div>`).join("")||'<div class="rsub">No monthly data.</div>'}
+    </div>
+  </div>`;
 }
 /* Financials card on the Reports page — real income / expenses / net profit and a
    month-by-month breakdown pulled from QuickBooks (populated by qboSyncRevenue). */
@@ -8151,7 +8258,7 @@ function qboConnect(){ window.location.href="/api/qbo-connect"; }
 function outlookConnect(){ window.location.href="/api/outlook-connect"; }
 async function outlookDisconnect(btn){ if(!await confirmModal("Disconnect Outlook? You'll need to reconnect to send from your mailbox again.",{title:"Disconnect Outlook",okLabel:"Disconnect",cancelLabel:"Keep connected"}))return; const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Disconnecting\u2026"; await fetch("/api/outlook-disconnect",{method:"POST"}); await refreshConnStatus(); toast("Outlook disconnected"); renderSettings($("#main")); }catch(e){ toast("Could not disconnect."); } finally{ if(btn)btn.textContent=orig||"Disconnect"; } }
 async function outlookSendTest(btn){ const to=(_connStatus&&_connStatus.outlookEmail)||""; if(!to){ toast("Connect Outlook first."); return; } const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending\u2026"; const r=await fetch("/api/outlook-send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({to,subject:"Good Work HQ \u2014 test email",html:'<p>This is a <b>test</b> from Good Work HQ. If this arrived with a working <a href="https://goodworkhq.co">link</a>, Outlook sending is live.</p>'})}); const d=await r.json(); toast(d.ok?("Test sent to "+to):(d.error||"Send failed")); }catch(e){ toast("Could not reach the Outlook send function. Deploy to Netlify with your MS env vars set."); } finally{ if(btn)btn.textContent=orig||"Send test to myself"; } }
-async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); renderSettings($("#main")); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
+async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); render(); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
 async function slackTest(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending…"; const r=await fetch("/api/notify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({channel:"slack",text:"Test from Good Work HQ. Your Slack notifications are wired up."})}); const d=await r.json(); toast(d.ok?"Sent to Slack":(d.error||"Slack is not configured yet.")); }catch(e){ toast("Could not reach the notify function. Deploy to Netlify with SLACK_WEBHOOK_URL set."); } finally{ if(btn)btn.textContent=orig||"Send test"; } }
 async function connInfo(){ await alertModal("Slack & SendGrid run from your Automations.\n\nTo make them live you'll add a Slack incoming-webhook URL and a SendGrid API key to a Netlify function, then point an automation at it. The automation rules engine is already built in — see the README for the wiring steps."); }
 function setRevMode(mode){ state.meta=state.meta||{}; state.meta.revenueMode=mode; save(); renderSettings($("#main")); }
