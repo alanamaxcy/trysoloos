@@ -1452,6 +1452,19 @@
   .ee-step button{ width:32px;background:none;border:none;color:var(--ink2);font-size:16px;cursor:pointer } .ee-step button:hover{ background:var(--hover);color:var(--ink) }
   .ee-step .v{ flex:1;text-align:center;font-size:13px;font-weight:700;align-self:center }
   .ee-dur{ text-align:center;font-size:12px;color:var(--ink2) } .ee-dur b{ color:var(--accent);font-size:13.5px }
+  /* compact "stream" view */
+  .tlrib{ display:flex;height:16px;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-bottom:12px }
+  .tlrib i{ height:100%;min-width:1px } .tlrib i.g{ background:repeating-linear-gradient(135deg,transparent,transparent 4px,color-mix(in srgb,var(--muted) 26%,transparent) 4px,color-mix(in srgb,var(--muted) 26%,transparent) 8px) }
+  .tlstream{ display:flex;flex-direction:column;gap:3px }
+  .tls-row{ display:grid;grid-template-columns:132px 1fr auto;gap:10px;align-items:center;padding:7px 11px;border-radius:8px;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--bc) }
+  .tls-row:hover{ background:var(--hover) }
+  .tls-time{ font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap }
+  .tls-name{ font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+  .tls-name .tls-sub{ font-weight:600;color:var(--ink2);font-size:11px }
+  .tls-dur{ font-weight:800;font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;min-width:50px }
+  .tls-gap{ display:flex;align-items:center;gap:9px;padding:3px 11px;color:var(--muted);font-size:10.5px;font-weight:700;cursor:pointer }
+  .tls-gap:hover{ color:var(--accent) } .tls-gap .ln{ flex:1;border-top:1px dashed var(--line2) }
+  @media(max-width:560px){ .tls-row{ grid-template-columns:1fr auto } .tls-time{ display:none } }
   #tbMBucket{ flex:1;min-width:0;border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 9px;font:inherit;font-size:13px;color:var(--ink) }
   #tbMMin{ width:104px;flex:0 0 104px }
   .tu-search svg{ width:15px;height:15px;flex-shrink:0 }
@@ -5404,12 +5417,41 @@ function _tlHM(min){ min=((Math.round(min)%1440)+1440)%1440; return String(Math.
 function _tlFmt(min){ min=((Math.round(min)%1440)+1440)%1440; let h=Math.floor(min/60),m=min%60,ap=h>=12?"PM":"AM",hh=h%12||12; return hh+":"+(m<10?"0":"")+m+" "+ap; }
 function _dayLabel(key){ const d=new Date(key+"T00:00:00"); const lbl=d.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}); return key===fmtDateKey(new Date())?("Today · "+lbl):lbl; }
 function _tlGaps(es){ const out=[]; let prev=null; es.forEach(e=>{ const s=_tlMin(e.start), en=s+Math.max(1,Math.round(e.seconds/60)); if(prev!=null&&s-prev>=5)out.push({start:prev,end:s,mins:s-prev}); prev=prev==null?en:Math.max(prev,en); }); return out; }
-function tlDayView(){
+function tlDayHead(){
   const key=timeDayKey(); const es=dayEntries(key);
   const tracked=es.reduce((s,e)=>s+e.seconds,0); const gapM=_tlGaps(es).reduce((a,g)=>a+g.mins,0);
   const isToday=key>=fmtDateKey(new Date());
-  const head=`<div class="tlday"><div class="tlnav"><button onclick="shiftTimeDay(-1)" title="Previous day">‹</button><button onclick="shiftTimeDay(1)" ${isToday?"disabled":""} title="Next day">›</button></div><div class="tlday-name">${esc(_dayLabel(key))}</div><span class="tl-tot"><span><b>${fmtDur(tracked)}</b><span class="k">tracked</span></span><span class="gap"><b>${gapM?fmtDur(gapM*60):"0m"}</b><span class="k">untracked</span></span></span></div>`;
-  return head+timelineHtml(key);
+  return `<div class="tlday"><div class="tlnav"><button onclick="shiftTimeDay(-1)" title="Previous day">‹</button><button onclick="shiftTimeDay(1)" ${isToday?"disabled":""} title="Next day">›</button></div><div class="tlday-name">${esc(_dayLabel(key))}</div><span class="tl-tot"><span><b>${fmtDur(tracked)}</b><span class="k">tracked</span></span><span class="gap"><b>${gapM?fmtDur(gapM*60):"0m"}</b><span class="k">untracked</span></span></span></div>`;
+}
+function tlRailHtml(es,gaps){
+  const by={}; let tracked=0; es.forEach(e=>{ const mn=Math.max(1,Math.round(e.seconds/60)); tracked+=mn; if(!by[e.label])by[e.label]={m:0,c:e.color}; by[e.label].m+=mn; });
+  const gapTot=gaps.reduce((a,g)=>a+g.mins,0); const span=tracked+gapTot||1;
+  const stack=Object.entries(by).sort((a,b)=>b[1].m-a[1].m).map(([k,v])=>`<i style="width:${v.m/span*100}%;background:${v.c}" title="${esc(k)}"></i>`).join("")+(gapTot?`<i class="u" style="width:${gapTot/span*100}%"></i>`:"");
+  const bkList=Object.entries(by).sort((a,b)=>b[1].m-a[1].m).map(([k,v])=>`<div class="tl-bk"><span class="d" style="background:${v.c}"></span><span class="n">${esc(k)}</span><span class="v">${fmtDur(v.m*60)}</span></div>`).join("");
+  const gapChips=gaps.length?gaps.map(g=>`<button class="tl-gc" data-tlgap="${g.start}|${g.end}"><span>${_tlFmt(g.start)}–${_tlFmt(g.end)}</span><span class="t">${fmtDur(g.mins*60)}</span></button>`).join(""):`<div class="rsub" style="margin:2px 0">No gaps — fully tracked.</div>`;
+  return `<div class="tl-rail"><div class="rc"><h4>Where the day went</h4><div class="tl-bar">${stack}</div>${bkList||'<div class="rsub">Nothing yet.</div>'}</div><div class="rc"><h4>Gaps to fill</h4>${gapChips}</div></div>`;
+}
+function tlDayView(){ return tlDayHead()+timelineHtml(timeDayKey()); }
+/* Compact "stream" view — every entry a fixed-height row so rapid task-switching
+   stays readable no matter how short each stint is; a thin proportional ribbon on
+   top keeps the at-a-glance shape, and gaps stay clickable to fill. */
+function compactDayView(){
+  const key=timeDayKey(); const es=dayEntries(key);
+  if(!es.length)return tlDayHead()+`<div class="empty-mini">No time logged on this day. Use ‹ › to change day, add one above, or switch to List.</div>`;
+  const gaps=_tlGaps(es);
+  let lo=Infinity,hi=-Infinity; es.forEach(e=>{ const s=_tlMin(e.start),en=s+Math.max(1,Math.round(e.seconds/60)); if(s<lo)lo=s; if(en>hi)hi=en; });
+  const span=Math.max(1,hi-lo);
+  let rib="",cursor=lo;
+  es.forEach(e=>{ const s=_tlMin(e.start),mins=Math.max(1,Math.round(e.seconds/60));
+    if(s>cursor)rib+=`<i class="g" style="width:${(s-cursor)/span*100}%"></i>`;
+    rib+=`<i style="width:${mins/span*100}%;background:${e.color}" title="${esc(e.label)} · ${fmtDur(mins*60)}"></i>`; cursor=Math.max(cursor,s+mins); });
+  let stream="",prev=null;
+  es.forEach(e=>{ const s=_tlMin(e.start),mins=Math.max(1,Math.round(e.seconds/60));
+    if(prev!=null&&s-prev>=5)stream+=`<div class="tls-gap" data-tlgap="${prev}|${s}"><span class="ln"></span>${fmtDur((s-prev)*60)} untracked — fill<span class="ln"></span></div>`;
+    prev=prev==null?s+mins:Math.max(prev,s+mins);
+    const idAttr=e.kind==="bucket"?`data-tlb="${e.id}"`:`data-tlt="${e.projectId}|${e.taskId}|${e.id}"`;
+    stream+=`<div class="tls-row" style="--bc:${e.color}" ${idAttr}><span class="tls-time">${_tlFmt(s)}–${_tlFmt(s+mins)}</span><span class="tls-name">${esc(e.label)}<span class="tls-sub"> · ${esc(e.sub)}${e.kind==="task"?" · timer":""}</span></span><span class="tls-dur">${fmtDur(mins*60)}</span></div>`; });
+  return tlDayHead()+`<div class="tlwrap"><div><div class="tlrib">${rib}</div><div class="tlstream">${stream}</div></div>${tlRailHtml(es,gaps)}</div>`;
 }
 function timelineHtml(key){
   const es=dayEntries(key);
@@ -5424,13 +5466,8 @@ function timelineHtml(key){
   const blk=es.map(e=>{ const s=_tlMin(e.start), mins=Math.max(1,Math.round(e.seconds/60)); const mini=mins*PX<28;
     const idAttr=e.kind==="bucket"?`data-tlb="${e.id}"`:`data-tlt="${e.projectId}|${e.taskId}|${e.id}"`;
     return `<div class="tl-blk${mini?" mini":""}" style="--bc:${e.color};top:${(s-lo)*PX+8}px;height:${Math.max(18,mins*PX-3)}px" ${idAttr}><div class="tl-bn">${esc(e.label)}${e.kind==="task"?" · timer":""}</div><div class="tl-bw">${esc(e.sub)} · ${_tlFmt(s)}–${_tlFmt(s+mins)} · ${fmtDur(mins*60)}</div></div>`; }).join("");
-  const by={}; let tracked=0; es.forEach(e=>{ const mn=Math.max(1,Math.round(e.seconds/60)); tracked+=mn; if(!by[e.label])by[e.label]={m:0,c:e.color}; by[e.label].m+=mn; });
-  const gapTot=gaps.reduce((a,g)=>a+g.mins,0); const span=tracked+gapTot||1;
-  const stack=Object.entries(by).sort((a,b)=>b[1].m-a[1].m).map(([k,v])=>`<i style="width:${v.m/span*100}%;background:${v.c}" title="${esc(k)}"></i>`).join("")+(gapTot?`<i class="u" style="width:${gapTot/span*100}%"></i>`:"");
-  const bkList=Object.entries(by).sort((a,b)=>b[1].m-a[1].m).map(([k,v])=>`<div class="tl-bk"><span class="d" style="background:${v.c}"></span><span class="n">${esc(k)}</span><span class="v">${fmtDur(v.m*60)}</span></div>`).join("");
-  const gapChips=gaps.length?gaps.map(g=>`<button class="tl-gc" data-tlgap="${g.start}|${g.end}"><span>${_tlFmt(g.start)}–${_tlFmt(g.end)}</span><span class="t">${fmtDur(g.mins*60)}</span></button>`).join(""):`<div class="rsub" style="margin:2px 0">No gaps — fully tracked.</div>`;
   const height=(hi-lo)*PX+24;
-  return `<div class="tlwrap"><div style="background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:6px"><div class="tl" style="height:${height}px">${hours}${gapsHtml}${blk}</div></div><div class="tl-rail"><div class="rc"><h4>Where the day went</h4><div class="tl-bar">${stack}</div>${bkList||'<div class="rsub">Nothing yet.</div>'}</div><div class="rc"><h4>Gaps to fill</h4>${gapChips}</div></div></div>`;
+  return `<div class="tlwrap"><div style="background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:6px"><div class="tl" style="height:${height}px">${hours}${gapsHtml}${blk}</div></div>${tlRailHtml(es,gaps)}</div>`;
 }
 let _eeState=null;
 function openEntryEditor(spec){ _eeState=spec; drawEntryEditor(); }
@@ -5539,10 +5576,10 @@ function renderTime(m){
       <div class="rep-card"><h3>Where the time went</h3><div class="rsub">Time by bucket and task</div>${barRows.length?chartBars(barRows,{fmt:fmtMin,labelW:160}):'<div class="rsub">Nothing logged in this range.</div>'}</div>
       <div class="rep-card"><h3>By day</h3><div class="rsub">Most recent ${Math.min(14,dayRows.length)} days with time</div>${dayRows.length?chartBars(dayRows,{fmt:fmtMin,labelW:90}):'<div class="rsub">Nothing logged in this range.</div>'}</div>
     </div>
-    <div class="panel"><div class="panel-head"><h3>${timeView()==="timeline"?"Day timeline":"Entries"}</h3><span class="spacer"></span>
-      <span class="tvseg"><button class="${timeView()==="timeline"?"on":""}" onclick="setTimeView('timeline')">Timeline</button><button class="${timeView()==="list"?"on":""}" onclick="setTimeView('list')">List</button></span></div>
+    <div class="panel"><div class="panel-head"><h3>${timeView()==="timeline"?"Day timeline":timeView()==="compact"?"Day stream":"Entries"}</h3><span class="spacer"></span>
+      <span class="tvseg"><button class="${timeView()==="timeline"?"on":""}" onclick="setTimeView('timeline')">Timeline</button><button class="${timeView()==="compact"?"on":""}" onclick="setTimeView('compact')">Compact</button><button class="${timeView()==="list"?"on":""}" onclick="setTimeView('list')">List</button></span></div>
       <div class="panel-body">
-        ${timeView()==="timeline" ? tlDayView() : `<div class="tv-add">
+        ${timeView()==="timeline" ? tlDayView() : timeView()==="compact" ? compactDayView() : `<div class="tv-add">
           <span class="tv-add-lbl">Add entry</span>
           <select id="tvAddBucket">${bsel}</select>
           <input id="tvAddDate" type="date" value="${todayStr()}">
