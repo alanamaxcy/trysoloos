@@ -3217,6 +3217,9 @@ function openLead(id){
     <div class="field"><label>Company name</label><input id="f_name" value="${esc(l.name)}"></div>
     <div class="field"><label>Stage</label><select id="f_stage">${STAGES.map(s=>`<option value="${s.key}" ${l.stage===s.key?"selected":""}>${s.label}</option>`).join("")}</select></div>
     <div class="field-row"><div class="field"><label>Contract value ($)</label><input id="f_cv" type="number" value="${l.contractValue??""}"></div><div class="field"><label>Annual value ($)</label><input id="f_av" type="number" value="${l.annualValue??""}"></div></div>
+    <div class="field-row"><div class="field"><label>Billing</label><select id="f_recur"><option value="recurring" ${l.recurring!==false?"selected":""}>Recurring / retainer</option><option value="onetime" ${l.recurring===false?"selected":""}>One-time / fixed term</option></select></div><div class="field"><label>Monthly ($)</label><input id="f_monthly" type="number" value="${l.monthly??""}" placeholder="${l.contractValue?Math.round(l.contractValue/((l.termMonths>0)?l.termMonths:12)):"auto"}"></div></div>
+    <div class="field-row"><div class="field"><label>Term (months)</label><input id="f_term" type="number" value="${l.termMonths??""}" placeholder="12"></div><div class="field"><label>Start date</label><input id="f_start" type="date" value="${esc(l.startDate||"")}"></div></div>
+    <div class="lt-hint" style="margin:-6px 0 2px">Contract value is what you <b>sold</b>. Monthly × start date is what you <b>collect</b> — used to reconcile bookings vs revenue on the Finance page.</div>
     <div class="field-row"><div class="field"><label>Budget tier</label><select id="f_tier"><option value="">—</option>${TIERS.map(t=>`<option ${l.budgetTier===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="field"><label>Owner</label><input id="f_owner" value="${esc(l.owner||"")}"></div></div>
     <div class="field"><label>Services <button type="button" class="link-btn" style="font-size:11px;font-weight:700" onclick="editServices()">Edit list</button></label><div class="chip-pick" id="f_svc">${svcList().map(s=>`<button type="button" class="${(l.services||[]).includes(s)?"on":""}" data-svc="${esc(s)}">${esc(s)}</button>`).join("")}</div></div>
     <div class="field-row"><div class="field"><label>Contact name</label><input id="f_cname" value="${esc(l.contactName||"")}" placeholder="e.g. Dana"></div><div class="field"><label>Contact email</label><input id="f_email" value="${esc(l.contactEmail||"")}"></div></div>
@@ -3241,6 +3244,8 @@ function openLead(id){
   { const fn=b.querySelector("#f_name"); if(fn)fn.addEventListener("change",()=>{ (state.people||[]).forEach(pp=>{ if(pp.leadId===l.id)pp.company=l.name; }); save(); }); }
   { const ap=b.querySelector("#f_addppl"); if(ap)ap.addEventListener("click",()=>{ const np={id:uid(),name:"New person",role:"",email:"",phone:"",company:l.name||"",category:"",kind:"contact",leadId:l.id,isPrimary:false,invitedToNetwork:false,priority:null,notes:""}; (state.people=state.people||[]).push(np); save(); openPerson(np.id); }); b.querySelectorAll("[data-lp]").forEach(r=>r.addEventListener("click",()=>openPerson(r.dataset.lp))); }
   bNum(b,"#f_cv",l,"contractValue"); bNum(b,"#f_av",l,"annualValue"); bDate(b,"#f_last",l,"lastContact"); bDate(b,"#f_follow",l,"nextFollowUp");
+  bNum(b,"#f_monthly",l,"monthly"); bNum(b,"#f_term",l,"termMonths"); bDate(b,"#f_start",l,"startDate");
+  { const rc=b.querySelector("#f_recur"); if(rc)rc.addEventListener("change",()=>{ l.recurring=(rc.value==="recurring"); save(); }); }
   { const fl=b.querySelector("#f_last"); if(fl)fl.addEventListener("change",()=>{ if(fl.value)logContact(l,fl.value); }); }
   { const ff=b.querySelector("#f_follow"); if(ff){ let _pf=l.nextFollowUp||""; ff.addEventListener("change",()=>{ const nv=ff.value||""; if(nv&&nv!==_pf){ l.activity=l.activity||[]; l.activity.push({id:uid(),date:todayStr(),text:"Follow-up scheduled for "+fmtDate(nv),auto:true}); save(); } _pf=nv; }); } }
   $("#f_stage").addEventListener("change",e=>{l.stage=e.target.value;save();});
@@ -5784,7 +5789,8 @@ function renderFinance(m){
     `<button class="btn btn-ghost btn-sm" onclick="qboSyncRevenue(this)">Sync from QuickBooks</button>`);
   if(!f||f.income==null){
     m.innerHTML=`<div class="rep-card rep-full"><h3>Connect your books</h3><div class="rsub" style="margin-bottom:10px">This dashboard turns your QuickBooks Profit &amp; Loss into income, expenses, profit, and a year-end forecast.</div>
-      <p style="font-size:13.5px;color:var(--ink2);line-height:1.55">${connected?"You're connected — click <b>Sync from QuickBooks</b> above to pull your latest numbers.":"Go to <b>Settings &rarr; Connections &rarr; QuickBooks</b>, click <b>Connect</b>, then <b>Sync revenue</b>. Your financials will appear here."}</p></div>`;
+      <p style="font-size:13.5px;color:var(--ink2);line-height:1.55">${connected?"You're connected — click <b>Sync from QuickBooks</b> above to pull your latest numbers.":"Go to <b>Settings &rarr; Connections &rarr; QuickBooks</b>, click <b>Connect</b>, then <b>Sync revenue</b>. Your financials will appear here."}</p></div>
+      ${contractReconCard()}`;
     return;
   }
   const now=new Date();
@@ -5810,6 +5816,7 @@ function renderFinance(m){
     ${kpi("Net profit",money(f.netProfit),margin+"% margin",f.netProfit>=0?"#3f7d5a":"#c1604a")}
     ${kpi("Avg monthly income",money(avgIncome),"run rate","#5b7fa6")}
   </div>
+  ${contractReconCard()}
   <div class="rep-card rep-full" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Forecast to year-end</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">run-rate from ${monthsElapsed} mo</span></div>
     <div class="rsub">If the rest of ${f.year||now.getFullYear()} looks like your average month so far.</div>
@@ -8521,6 +8528,68 @@ async function slackTest(btn){ const orig=btn?btn.textContent:""; try{ if(btn)bt
 async function connInfo(){ await alertModal("Slack & SendGrid run from your Automations.\n\nTo make them live you'll add a Slack incoming-webhook URL and a SendGrid API key to a Netlify function, then point an automation at it. The automation rules engine is already built in — see the README for the wiring steps."); }
 function setRevMode(mode){ state.meta=state.meta||{}; state.meta.revenueMode=mode; save(); renderSettings($("#main")); }
 function saveRevActual(v){ state.meta=state.meta||{}; state.meta.revenueActual=+v||0; save(); toast("Revenue updated"); }
+/* ===== BOOKINGS vs REVENUE reconciliation =====
+   A closed-won deal is a *booking* (total contract value). For a recurring/term
+   contract you collect it monthly, and a mid-year start splits the revenue across
+   calendar years. These helpers turn each deal into a monthly schedule so we can
+   show booked (sales) alongside recognized/collected revenue (matches QuickBooks). */
+function dealMonthly(l){ if(l.monthly!=null&&l.monthly!==""&&!isNaN(+l.monthly))return +l.monthly; const t=(l.termMonths>0)?l.termMonths:12; return (l.contractValue||0)/t; }
+function dealTerm(l){ return (l.termMonths>0)?l.termMonths:12; }
+function dealRecurring(l){ return l.recurring!==false; }  // default recurring
+function dealStart(l){ return (l.startDate&&/^\d{4}-\d{2}-\d{2}$/.test(l.startDate))?new Date(l.startDate+"T00:00:00"):null; }
+// Per-deal revenue within a calendar year, given the current month index (0-11).
+function dealRevenueYear(l,year,curM){
+  const mo=dealMonthly(l), recurring=dealRecurring(l), term=dealTerm(l), start=dealStart(l);
+  let startIdx;
+  if(start){ const sy=start.getFullYear(),sm=start.getMonth(); if(sy<year)startIdx=0; else if(sy===year)startIdx=sm; else return {monthly:mo,recognizedYTD:0,remainingThisYear:0,expectedFullYear:0,activeMonthlyNow:0}; }
+  else startIdx=0; // unknown start -> assume active since January
+  let lastIdx;
+  if(recurring)lastIdx=11;
+  else { const startAbs=start?(start.getFullYear()*12+start.getMonth()):(year*12); const endAbsExcl=startAbs+Math.max(1,term); lastIdx=Math.min(11,(endAbsExcl-1)-(year*12)); if(lastIdx<startIdx)lastIdx=startIdx-1; }
+  const recognizedMonths=Math.max(0,Math.min(curM,lastIdx)-startIdx+1);
+  const remainingMonths=Math.max(0,lastIdx-Math.max(startIdx,curM+1)+1);
+  const activeNow=(startIdx<=curM&&curM<=lastIdx)?mo:0;
+  return { monthly:mo, recognizedYTD:Math.round(mo*recognizedMonths), remainingThisYear:Math.round(mo*remainingMonths), expectedFullYear:Math.round(mo*(recognizedMonths+remainingMonths)), activeMonthlyNow:Math.round(activeNow) };
+}
+function contractRecon(year,curM){
+  year=year||new Date().getFullYear(); curM=(curM==null)?new Date().getMonth():curM;
+  const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
+  let booked=0,recognizedYTD=0,mrr=0,backlogYear=0,expectedFullYear=0;
+  won.forEach(l=>{ const r=dealRevenueYear(l,year,curM); booked+=(l.contractValue||0); recognizedYTD+=r.recognizedYTD; mrr+=r.activeMonthlyNow; backlogYear+=r.remainingThisYear; expectedFullYear+=r.expectedFullYear; });
+  return { year,curM, booked:Math.round(booked), recognizedYTD, mrr, arr:mrr*12, backlogYear, expectedFullYear, wonCount:won.length };
+}
+function contractReconCard(){
+  const r=contractRecon(); if(!r.wonCount)return "";
+  const f=(state.meta&&state.meta.financials)||null;
+  const qbo=(f&&f.income!=null)?f.income:null;
+  const diff=(qbo!=null)?(qbo-r.recognizedYTD):null;
+  const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
+  const bookedPct=goal?Math.min(100,Math.round(r.booked/goal*100)):0;
+  const expPct=goal?Math.min(100,Math.round(r.expectedFullYear/goal*100)):0;
+  const box=(l,v,s,col)=>`<div class="box"><div class="l">${l}</div><div class="v" style="${col?`color:${col}`:""}">${v}</div><div class="s">${s||""}</div></div>`;
+  const recRow=(qbo!=null)?`<div class="rsub" style="margin-top:10px">Reconciliation — contracts say you've earned <b>${money(r.recognizedYTD)}</b>; QuickBooks shows <b>${money(qbo)}</b> collected. ${Math.abs(diff)<Math.max(500,r.recognizedYTD*0.05)?"These line up. ✓":("Gap of "+money(Math.abs(diff))+" — likely un-invoiced work or billing timing.")}</div>`:"";
+  return `<div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Bookings vs revenue</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">${r.wonCount} closed-won</span></div>
+    <div class="rsub">What you've <b>sold</b> vs what you'll actually <b>collect</b> — recurring contracts spread across the year.</div>
+    <div class="fin-fc">
+      ${box("Booked (contracts sold)",money(r.booked),goal?bookedPct+"% of "+money(goal)+" goal":"total contract value","#5b7fa6")}
+      ${box("Recognized this year",money(r.recognizedYTD),"earned so far — matches QuickBooks","#3f7d5a")}
+      ${box("Contracted rest of year",money(r.backlogYear),"already locked in","#D9A05B")}
+    </div>
+    <div class="fin-fc" style="margin-top:0">
+      ${box("MRR",money(r.mrr),"monthly recurring, active now","#5b7fa6")}
+      ${box("ARR",money(r.arr),"annualized run-rate","#5b7fa6")}
+      ${box("Expected full-year",money(r.expectedFullYear),goal?expPct+"% of goal":"recognized + contracted","#3f7d5a")}
+    </div>
+    ${goal?`<div class="rsub" style="margin:12px 0 4px">Toward your ${money(goal)} goal — <b>booked ${bookedPct}%</b> · <b>projected collected ${expPct}%</b></div>
+      <div style="position:relative;height:14px;background:var(--side);border-radius:8px;overflow:hidden">
+        <div style="position:absolute;inset:0;width:${bookedPct}%;background:color-mix(in srgb,#5b7fa6 45%,transparent)"></div>
+        <div style="position:absolute;inset:0;width:${expPct}%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div>
+      </div>
+      <div class="fin-legend" style="justify-content:flex-start;margin-top:6px"><span><i style="background:color-mix(in srgb,#5b7fa6 55%,transparent)"></i>Booked (sold)</span><span><i style="background:#3f7d5a"></i>Projected collected</span></div>`:""}
+    ${recRow}
+  </div>`;
+}
 function earnedRevenue(){ const m=state.meta||{}; if(m.revenueMode==="manual")return +m.revenueActual||0; return state.pipeline.filter(l=>isWon(l.stage)).reduce((s,l)=>s+(l.contractValue||0),0); }
 function revGoalTarget(){ const g=(state.annualGoals||[]).find(x=>x.source==="won-value"&&x.target); return g?+g.target:((state.meta&&state.meta.revenueGoal)||150000); }
 function salesMath(){
