@@ -677,7 +677,7 @@
   .cal-more{font-size:11px;font-weight:700;color:var(--muted)}
 
   /* ============ REPORTS ============ */
-  .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+  .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
   .rep-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .rep-card h3{font-family:var(--disp);margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
   .rep-card .rsub{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:14px}
@@ -1397,6 +1397,20 @@
   .fin-fc .box .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted) }
   .fin-fc .box .v{ font-family:var(--disp);font-size:21px;font-weight:800;margin-top:2px }
   .fin-fc .box .s{ font-size:11px;color:var(--ink2);font-weight:600;margin-top:1px }
+  /* chart hover tooltip */
+  .chart-tip{ position:fixed;z-index:2000;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;box-shadow:0 4px 14px -4px rgba(0,0,0,.4) }
+  .chart-tip.show{ opacity:1 }
+  /* subscriptions */
+  .sub-head,.sub-row{ display:grid;grid-template-columns:24px 1.4fr 1fr 104px 118px 78px 28px;gap:8px;align-items:center }
+  .sub-head{ font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 0 4px;border-bottom:1px solid var(--line) }
+  .sub-row{ padding:6px 0;border-bottom:1px solid var(--line) }
+  .sub-row.off{ opacity:.5 }
+  .sub-row input,.sub-row select{ border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 8px;font:inherit;font-size:12.5px;color:var(--ink);width:100% }
+  .sub-row input[type=checkbox]{ width:auto;cursor:pointer }
+  .sub-amt{ display:flex;align-items:center;gap:2px;font-weight:700;color:var(--ink2) } .sub-amt input{ width:76px;text-align:right }
+  .sub-mo{ font-size:12px;font-weight:800;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums }
+  .sub-del{ background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px } .sub-del:hover{ color:#c1604a }
+  @media(max-width:720px){ .sub-head,.sub-row{ grid-template-columns:24px 1fr 96px 28px } .sub-cat,.sub-cad,.sub-mo{ display:none } }
   #tbMBucket{ flex:1;min-width:0;border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 9px;font:inherit;font-size:13px;color:var(--ink) }
   #tbMMin{ width:104px;flex:0 0 104px }
   .tu-search svg{ width:15px;height:15px;flex-shrink:0 }
@@ -4082,6 +4096,8 @@ function migrate(s){
     if(s.annualGoals.length && s.annualGoals.every(g=>g.target==null) && s.annualGoals.some(g=>/operating system|thought leadership/i.test(g.title||""))){ s.annualGoals=seedAnnualGoals(); (s.rocks||[]).forEach(r=>{ r.annualGoalId=null; }); } }
   if(Array.isArray(s.rocks)&&Array.isArray(s.annualGoals)&&!s.rocks.some(r=>r.annualGoalId)){ const findG=t=>{const g=s.annualGoals.find(x=>(x.title||"").toLowerCase().includes(t));return g?g.id:null;}; s.rocks.forEach(r=>{ const t=(r.title||"").toLowerCase(); if(t.includes("retainer")||t.includes("client"))r.annualGoalId=findG("client"); else if(t.includes("linkedin")||t.includes("thought")||t.includes("leadership")||t.includes("follower"))r.annualGoalId=findG("linkedin"); }); }
   if(!Array.isArray(s.automationLog)) s.automationLog=[];
+  if(!Array.isArray(s.subscriptions)) s.subscriptions=[];
+  s.meta=s.meta||{}; if(s.meta.taxRatePct==null) s.meta.taxRatePct=30; if(s.meta.taxReserved==null) s.meta.taxReserved=0;
   if(!s.connections) s.connections={microsoft:false}; if(typeof s.connections.quickbooks!=="boolean")s.connections.quickbooks=false; if(typeof s.connections.slackEnabled!=="boolean")s.connections.slackEnabled=false; if(typeof s.connections.emailFromName!=="string")s.connections.emailFromName=""; if(typeof s.connections.icsUrl!=="string")s.connections.icsUrl=""; if(typeof s.connections.digestEmail!=="string")s.connections.digestEmail=""; (s.pipeline||[]).forEach(l=>{ if(typeof l.contactName!=="string")l.contactName=""; if(typeof l.contactEmail!=="string")l.contactEmail=""; }); if(!Array.isArray(s.links)) s.links=[];
   s.docFolders=s.docFolders||[];
   if(!s.social) s.social=[];
@@ -5642,8 +5658,8 @@ function finIncExpChart(months){
   const grid=[0,0.5,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${money(Math.round(v))}</text>`; }).join("");
   let bars="";
   months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1;
-    bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61"><title>${esc(m.month)} · income ${money(m.income)}</title></rect>`;
-    bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55"><title>${esc(m.month)} · expenses ${money(m.expenses)}</title></rect>`;
+    bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" data-tip="${esc(m.month)} · income ${money(m.income)}"></rect>`;
+    bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" data-tip="${esc(m.month)} · expenses ${money(m.expenses)}"></rect>`;
     bars+=`<text x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span><i style="background:#5e8c61"></i>Income</span><span><i style="background:#CB6E55"></i>Expenses</span></div>`;
@@ -5662,9 +5678,74 @@ function finCumNetChart(months){
     <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" fill="var(--muted)">$0</text>
     <path d="${area}" fill="color-mix(in srgb,#5b7fa6 15%,transparent)"/>
     <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.5"/>
-    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6"><title>${esc(p.month)} · cumulative net ${money(Math.round(p.cum))}</title></circle>`).join("")}
+    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))}"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
     ${pts.map((p,i)=>`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((p.month||"").slice(0,3))}</text>`).join("")}
   </svg>`;
+}
+/* ===== SUBSCRIPTIONS / recurring costs ===== */
+function subsList(){ if(!Array.isArray(state.subscriptions))state.subscriptions=[]; return state.subscriptions; }
+function subMonthly(s){ const a=+s.amount||0; return s.cadence==="annual"?a/12:s.cadence==="quarterly"?a/3:s.cadence==="weekly"?a*4.333:a; }
+function subsMonthlyTotal(){ return subsList().filter(s=>s.active!==false).reduce((t,s)=>t+subMonthly(s),0); }
+function addSub(){ subsList().push({id:uid(),name:"",amount:0,cadence:"monthly",category:"Software",active:true}); save(); if(view==="finance")renderFinance($("#main")); }
+function updSub(id,field,val){ const s=subsList().find(x=>x.id===id); if(!s)return; if(field==="amount")val=+String(val).replace(/[^0-9.]/g,"")||0; if(field==="active")val=!!val; s[field]=val; save(); if(field==="active"||field==="cadence")renderFinance($("#main")); }
+function delSub(id){ state.subscriptions=subsList().filter(x=>x.id!==id); save(); if(view==="finance")renderFinance($("#main")); }
+function subsCard(){
+  const list=subsList(); const mo=subsMonthlyTotal(), yr=mo*12;
+  const cats={}; list.filter(s=>s.active!==false).forEach(s=>{ const c=s.category||"Other"; cats[c]=(cats[c]||0)+subMonthly(s); });
+  const cadOpts=c=>["monthly","quarterly","annual","weekly"].map(x=>`<option value="${x}" ${c===x?"selected":""}>${x}</option>`).join("");
+  const rows=list.map(s=>`<div class="sub-row ${s.active===false?"off":""}">
+    <input type="checkbox" ${s.active!==false?"checked":""} onchange="updSub('${s.id}','active',this.checked)" title="Active">
+    <input class="sub-name" value="${esc(s.name||"")}" onchange="updSub('${s.id}','name',this.value)" placeholder="e.g. Claude, Adobe">
+    <input class="sub-cat" value="${esc(s.category||"")}" onchange="updSub('${s.id}','category',this.value)" placeholder="Category">
+    <select class="sub-cad" onchange="updSub('${s.id}','cadence',this.value)">${cadOpts(s.cadence||"monthly")}</select>
+    <span class="sub-amt">$<input type="number" min="0" value="${s.amount||0}" onchange="updSub('${s.id}','amount',this.value)"></span>
+    <span class="sub-mo">${money(Math.round(subMonthly(s)))}/mo</span>
+    <button class="sub-del" onclick="delSub('${s.id}')" title="Remove">×</button>
+  </div>`).join("");
+  return `<div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Recurring costs &amp; subscriptions</h3><span style="margin-left:auto;font-weight:800;color:#CB6E55">${money(Math.round(mo))}/mo · ${money(Math.round(yr))}/yr</span></div>
+    <div class="rsub">Every recurring bill in one place — software, AI, tools. Toggle off anything you're not really using.</div>
+    ${list.length?`<div class="sub-head"><span></span><span>Name</span><span>Category</span><span>Cadence</span><span>Amount</span><span>Monthly</span><span></span></div>${rows}`:`<div class="empty-mini">No subscriptions tracked yet — add your AI bill, software, and tools below.</div>`}
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addSub()">+ Add subscription</button>
+    ${Object.keys(cats).length>1?`<div class="rsub" style="margin-top:12px">By category: ${Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<b>${esc(c)}</b> ${money(Math.round(v))}/mo`).join(" · ")}</div>`:""}
+  </div>`;
+}
+/* ===== TAX RESERVE ===== */
+function taxRate(){ const r=(state.meta&&state.meta.taxRatePct); return (r==null?30:+r); }
+function setTaxRate(v){ state.meta=state.meta||{}; state.meta.taxRatePct=Math.max(0,Math.min(60,Math.round(+v||0))); save(); if(view==="finance")renderFinance($("#main")); }
+function setTaxReserved(v){ state.meta=state.meta||{}; state.meta.taxReserved=Math.max(0,Math.round(+String(v).replace(/[^0-9.]/g,"")||0)); save(); if(view==="finance")renderFinance($("#main")); }
+function taxCard(){
+  const f=(state.meta&&state.meta.financials)||null;
+  const net=(f&&f.netProfit!=null)?f.netProfit:null;
+  const rate=taxRate();
+  const recommended=(net!=null&&net>0)?Math.round(net*rate/100):0;
+  const reserved=+((state.meta&&state.meta.taxReserved))||0;
+  const short=Math.max(0,recommended-reserved);
+  const pct=recommended?Math.min(100,Math.round(reserved/recommended*100)):0;
+  return `<div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Tax reserve</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">${rate}% of net profit</span></div>
+    <div class="rsub">Set aside for taxes as you earn, so you're never caught short. Consultants typically reserve 25–35% of net profit (quarterly: Apr 15 · Jun 15 · Sep 15 · Jan 15).</div>
+    <div class="fin-fc" style="margin-top:6px">
+      <div class="box"><div class="l">Should have reserved</div><div class="v" style="color:#CB6E55">${net!=null?money(recommended):"—"}</div><div class="s">${rate}% of ${net!=null?money(Math.max(0,net)):"net"} net profit YTD</div></div>
+      <div class="box"><div class="l">Reserved so far</div><div class="v" style="color:#3f7d5a">${money(reserved)}</div><div class="s">${pct}% of target</div></div>
+      <div class="box"><div class="l">${short>0?"Still to set aside":"Status"}</div><div class="v" style="color:${short>0?"#c1604a":"#3f7d5a"}">${short>0?money(short):"On track ✓"}</div><div class="s">${short>0?"add to your tax savings":"fully reserved"}</div></div>
+    </div>
+    <div style="height:12px;background:var(--side);border-radius:7px;overflow:hidden;margin-top:4px"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:7px"></div></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;align-items:center">
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Reserve rate <input type="number" min="0" max="60" value="${rate}" style="width:56px;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:var(--surface);color:var(--ink)" onchange="setTaxRate(this.value)">%</label>
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Reserved so far $ <input type="number" min="0" value="${reserved}" style="width:110px;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:var(--surface);color:var(--ink)" onchange="setTaxReserved(this.value)"></label>
+    </div>
+    ${(net!=null&&net<0)?`<div class="rsub" style="margin-top:8px">You're at a net loss YTD, so no income tax is owed on it — but keep reserving once you're profitable.</div>`:""}
+  </div>`;
+}
+function bindChartTips(root){
+  let tip=document.getElementById("chartTip");
+  if(!tip){ tip=document.createElement("div"); tip.id="chartTip"; tip.className="chart-tip"; document.body.appendChild(tip); }
+  root.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>{ tip.textContent=el.getAttribute("data-tip"); tip.classList.add("show"); });
+    el.addEventListener("mousemove",e=>{ tip.style.left=(e.clientX+12)+"px"; tip.style.top=(e.clientY-10)+"px"; });
+    el.addEventListener("mouseleave",()=>tip.classList.remove("show"));
+  });
 }
 function renderFinance(m){
   const f=(state.meta&&state.meta.financials)||null;
@@ -5721,7 +5802,10 @@ function renderFinance(m){
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>
       ${months.map(mo=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">${esc((mo.month||"").slice(0,3))}</span><span style="text-align:right;color:var(--ink2)">${money(mo.income)}</span><span style="text-align:right;color:var(--ink2)">${money(mo.expenses)}</span><span style="text-align:right;font-weight:800;color:${mo.netProfit>=0?"#3f7d5a":"#c1604a"}">${money(mo.netProfit)}</span></div>`).join("")||'<div class="rsub">No monthly data.</div>'}
     </div>
-  </div>`;
+  </div>
+  ${subsCard()}
+  ${taxCard()}`;
+  bindChartTips(m);
 }
 /* Financials card on the Reports page — real income / expenses / net profit and a
    month-by-month breakdown pulled from QuickBooks (populated by qboSyncRevenue). */
