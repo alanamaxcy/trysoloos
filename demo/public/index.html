@@ -4274,6 +4274,11 @@ function migrate(s){
   if(!Array.isArray(s.automationLog)) s.automationLog=[];
   if(!Array.isArray(s.subscriptions)) s.subscriptions=[];
   s.meta=s.meta||{}; if(s.meta.taxRatePct==null) s.meta.taxRatePct=30; if(s.meta.taxReserved==null) s.meta.taxReserved=0;
+  if(!s.meta.decidedBackfilled){ const kindOf=k=>{const arr=(s.config&&s.config.stages)||(typeof STAGES!=="undefined"?STAGES:[]);const st=arr.find(x=>x.key===k);return st?(st.kind||"open"):"open";};
+    (s.pipeline||[]).forEach(l=>{ if(l.decidedAt)return; const kd=kindOf(l.stage);
+      if(kd==="won")l.decidedAt=l.startDate||l.lastContact||todayStr();
+      else if(kd==="lost")l.decidedAt=l.lastContact||"unknown"; });
+    s.meta.decidedBackfilled=true; }
   if(!s.meta.growth) s.meta.growth={lastYearIncome:null,growthPct:20,debtBalance:null,debtMonthly:null};
   if(!s.connections) s.connections={microsoft:false}; if(typeof s.connections.quickbooks!=="boolean")s.connections.quickbooks=false; if(typeof s.connections.slackEnabled!=="boolean")s.connections.slackEnabled=false; if(typeof s.connections.emailFromName!=="string")s.connections.emailFromName=""; if(typeof s.connections.icsUrl!=="string")s.connections.icsUrl=""; if(typeof s.connections.digestEmail!=="string")s.connections.digestEmail=""; (s.pipeline||[]).forEach(l=>{ if(typeof l.contactName!=="string")l.contactName=""; if(typeof l.contactEmail!=="string")l.contactEmail=""; }); if(!Array.isArray(s.links)) s.links=[];
   s.docFolders=s.docFolders||[];
@@ -5404,6 +5409,7 @@ const NAV3=[
 ];
 function buildNav(){
   syncAllFollowups();
+  try{ reconcileDecided(); }catch(e){}
   const counts={pipeline:state.pipeline.filter(l=>ACTIVE_STAGES.includes(l.stage)).length,projects:state.projects.length,meetings:(state.meetings||[]).length,people:state.people.length,todos:state.todos.filter(t=>t.status!=="DONE"&&!isGoalCat(t.category)).length,goals:rocksInQuarter(quarterKey(new Date())).filter(r=>r.status!=="done").length,docs:state.docs.length};
   const favs=(state.config&&state.config.favorites)||[];
   const favSet=new Set(favs);
@@ -6191,7 +6197,7 @@ function cfoContext(){
   const insL=finInsightsList().map(i=>i.text).join(" | ")||"none";
   const scrubN=s=>String(s||"").replace(/[\r\n\t]+/g," ").replace(/[<>{}`]/g,"").slice(0,240);
   const M=salesMath();
-  const salesL="close rate "+(M.resolved?Math.round(M.compClose*100)+"% measured ("+M.won.length+" won / "+M.resolved+" decided)":"no decided deals yet")+"; planning uses "+Math.round(M.closeRate*100)+"%"+(M.closeOverride?" (their override)":"")+"; avg deal "+money(M.avgDeal)+"; each lead worth ~"+money(Math.round(M.perLead))+"; "+M.leadsNeeded+" more leads needed for the goal";
+  const salesL="close rate ("+(salesWindow()==="year"?"this year":"all time")+") "+(M.resolved?Math.round(M.compClose*100)+"% measured ("+M.wonW.length+" won / "+M.resolved+" decided)":"no decided deals yet")+"; planning uses "+Math.round(M.closeRate*100)+"%"+(M.closeOverride?" (their override)":"")+"; avg deal "+money(M.avgDeal)+"; each lead worth ~"+money(Math.round(M.perLead))+"; "+M.leadsNeeded+" more leads needed for the goal";
   const chanL=srcStats().map(s=>scrub(s.name)+": "+s.leads+" leads, "+s.won+" won"+(s.close!=null?" ("+Math.round(s.close*100)+"% close)":"")+", "+money(s.rev)+" won revenue"+(s.cost>0?(", spend "+money(s.cost)+(s.cac!=null?", CAC "+money(s.cac):"")+(s.roi!=null?", return "+s.roi.toFixed(1)+"x":"")):"")).join("; ")||"no sources tagged";
   const _mtgs=(state.meetings||[]).filter(m=>m.leadId&&String(m.notes||"").trim()).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,6);
   const _trs=(state.meetings||[]).filter(m=>m.leadId&&m.transcript).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,2);
@@ -6333,7 +6339,7 @@ function srcStats(){
   const costs=(state.meta&&state.meta.channelCosts)||{};
   const names=[...new Set([].concat(LEAD_SOURCES,P.map(l=>l.leadSource).filter(Boolean),Object.keys(costs)))];
   return names.map(function(nm){ const ls=P.filter(l=>(l.leadSource||"")===nm);
-    const won=ls.filter(l=>isWon(l.stage)), lost=ls.filter(l=>isLost(l.stage));
+    const won=ls.filter(l=>isWon(l.stage)&&decidedInWindow(l)), lost=ls.filter(l=>isLost(l.stage)&&decidedInWindow(l));
     const dec=won.length+lost.length;
     const rev=won.reduce((s,l)=>s+(l.contractValue||0),0);
     const cost=+costs[nm]||0;
@@ -6351,15 +6357,19 @@ function finSalesHtml(){
   const a=(state.config&&state.config.salesAssumptions)||{};
   const box=function(l,v,s,col){ return '<div class="box"><div class="l">'+l+'</div><div class="v"'+(col?(' style="color:'+col+'"'):'')+'>'+v+'</div><div class="s">'+(s||'')+'</div></div>'; };
   const closeCard='<div class="rep-card rep-full" style="margin-bottom:16px">'
-    +'<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Close rate, explained</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">'+M.won.length+' won · '+M.lost.length+' lost · '+M.open.length+' in play</span></div>'
+    +'<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Close rate, explained</h3><span class="tvseg" style="margin-left:auto"><button class="'+(salesWindow()==="year"?"on":"")+'" onclick="setSalesWindow(\'year\')">This year</button><button class="'+(salesWindow()==="all"?"on":"")+'" onclick="setSalesWindow(\'all\')">All time</button></span></div>'
     +'<div class="rsub">A lead enters the denominator only when it is <b>decided</b> — moved to Closed Won or Not Now. Leads still in play never count, so working your pipeline can’t hurt the rate; only winning or giving up moves it.'+(M.lowHistory?' With under 4 decided deals the measured rate is low-confidence, so planning stays conservative.':'')+'</div>'
+    +(function(){ const excl=(M.won.length-M.wonW.length)+(M.lost.length-M.lostW.length);
+      return '<div class="rsub" style="margin-top:4px"><b>'+(salesWindow()==="year"?"This year":"All time")+':</b> '+M.wonW.length+' won + '+M.lostW.length+' not-now = '+M.resolved+' decided'
+        +((salesWindow()==="year"&&excl>0)?(' · <b>'+excl+'</b> older or undated decided deal'+(excl===1?'':'s')+' excluded'):'')
+        +' · <a class="link-btn" onclick="openDecidedList()">see the list</a> · decisions are date-stamped automatically from now on, so you never need to wipe old deals again.</div>'; })()
     +'<div class="fin-fc" style="margin-top:10px">'
-    +box('Measured close rate',(M.resolved?Math.round(M.compClose*100)+'%':'—'),M.won.length+' won ÷ '+M.resolved+' decided','#5b7fa6')
+    +box('Measured close rate',(M.resolved?Math.round(M.compClose*100)+'%':'—'),M.wonW.length+' won ÷ '+M.resolved+' decided'+(salesWindow()==="year"?' this year':''),'#5b7fa6')
     +box('Used for planning',Math.round(M.closeRate*100)+'%',(M.closeOverride?'your override':(M.compClose>0.6?'capped at 60% until more history':(M.resolved?'measured':'default until deals decide'))),'#3f7d5a')
     +box('Each new lead is worth',money(Math.round(M.perLead)),'close rate × '+money(M.avgDeal)+' avg deal','#3f7d5a')
     +'</div>'
     +'<div class="fin-fc" style="margin-top:0">'
-    +box('Avg deal size',money(M.avgDeal),(M.avgOverride?'your override':'from '+M.won.length+' won deals'),'#5b7fa6')
+    +box('Avg deal size',money(M.avgDeal),(M.avgOverride?'your override':'from '+M.wonW.length+' won deal'+(M.wonW.length===1?'':'s')),'#5b7fa6')
     +box('Leads needed for goal',String(M.leadsNeeded),money(M.remaining)+' gap after weighted pipeline',M.leadsNeeded>10?'#CB6E55':'#3f7d5a')
     +box('Pipeline coverage',(isFinite(M.coverage)?M.coverage.toFixed(1)+'x':'✓'),'weighted pipeline vs gap',(!isFinite(M.coverage)||M.coverage>=2)?'#3f7d5a':(M.coverage>=1?'#D9A05B':'#c1604a'))
     +'</div>'
@@ -9255,6 +9265,46 @@ function contractReconCard(){
 }
 function earnedRevenue(){ const m=state.meta||{}; if(m.revenueMode==="manual")return +m.revenueActual||0; return state.pipeline.filter(l=>isWon(l.stage)).reduce((s,l)=>s+(l.contractValue||0),0); }
 function revGoalTarget(){ const g=(state.annualGoals||[]).find(x=>x.source==="won-value"&&x.target); return g?+g.target:((state.meta&&state.meta.revenueGoal)||150000); }
+/* ===== DECIDED-DATE tracking — close rate scoped by year, inspectable ===== */
+function salesWindow(){ return (state.config&&state.config.salesWindow)||"year"; }
+function setSalesWindow(w){ state.config=state.config||{}; state.config.salesWindow=w; save(); if(view==="finance")renderFinance($("#main")); }
+/* When did this lead get decided? Stamped going forward; estimated for legacy
+   records (won: start date, then last contact, then assume this year since wins
+   are curated; lost: last contact, else unknown = all-time only). */
+function leadDecidedYear(l){
+  const d=l.decidedAt;
+  if(d&&/^\d{4}-/.test(d))return {y:+d.slice(0,4),est:false};
+  if(isWon(l.stage)){ const s2=l.startDate||l.lastContact; if(s2&&/^\d{4}-/.test(s2))return {y:+s2.slice(0,4),est:true}; return {y:new Date().getFullYear(),est:true}; }
+  const lc=l.lastContact; if(lc&&/^\d{4}-/.test(lc))return {y:+lc.slice(0,4),est:true};
+  return {y:null,est:true};
+}
+function decidedInWindow(l){ if(salesWindow()==="all")return true; return leadDecidedYear(l).y===new Date().getFullYear(); }
+/* Stamp new decisions / clear reopened ones. Runs on every nav rebuild, so every
+   stage-change path (drawer, board drag, list pill, bulk, AI) is covered. */
+function reconcileDecided(){ let ch=false; (state&&state.pipeline||[]).forEach(l=>{
+  const dec=isWon(l.stage)||isLost(l.stage);
+  if(dec&&!l.decidedAt){ l.decidedAt=todayStr(); ch=true; }
+  if(!dec&&l.decidedAt){ delete l.decidedAt; ch=true; } });
+  if(ch)save(); }
+function openDecidedList(){
+  const rows=(state.pipeline||[]).filter(l=>isWon(l.stage)||isLost(l.stage))
+    .map(l=>({l,dy:leadDecidedYear(l)}))
+    .sort((a,b)=>String(b.l.decidedAt||b.dy.y||"").localeCompare(String(a.l.decidedAt||a.dy.y||"")));
+  openDrawer("Decided deals — the close-rate denominator");
+  $("#drawerBody").innerHTML='<div class="mi-hint">Every deal that has ever been decided (Closed Won or Not Now) — including ones you may not see in the Pipeline view. Reopen anything that shouldn\'t count.</div>'
+    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px">'
+      +'<span style="width:9px;height:9px;border-radius:3px;flex-shrink:0;background:'+(isWon(x.l.stage)?"#3f7d5a":"#9aa7b2")+'"></span>'
+      +'<span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.l.name||"")+'</span>'
+      +'<span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(stageMeta(x.l.stage).label)+'</span>'
+      +'<span style="font-size:11.5px;color:var(--muted);font-weight:700;width:84px;text-align:right">'+(x.l.decidedAt?esc(fmtDate(x.l.decidedAt)):(x.dy.y!=null?("~"+x.dy.y):"no date"))+'</span>'
+      +'<button class="btn btn-ghost btn-sm" onclick="reopenDecided(\''+x.l.id+'\')">Reopen</button>'
+    +'</div>').join("")||'<div class="empty-mini">Nothing decided yet.</div>');
+  $("#drawerFoot").innerHTML="";
+}
+function reopenDecided(id){ const l=(state.pipeline||[]).find(x=>x.id===id); if(!l)return;
+  const open=STAGES.find(s=>(s.kind||"open")==="open"); l.stage=open?open.key:l.stage; delete l.decidedAt; save();
+  toast((l.name||"Lead")+" reopened — no longer counts as decided");
+  openDecidedList(); if(view==="finance")renderFinance($("#main")); }
 function salesMath(){
   const P=state.pipeline||[];
   const won=P.filter(l=>isWon(l.stage));
@@ -9266,10 +9316,11 @@ function salesMath(){
   const goal=revGoalTarget();
   const gap=Math.max(0,goal-wonVal);
   const coverage=gap>0?weighted/gap:Infinity;
-  const resolved=won.length+lost.length;
-  const compClose=resolved?won.length/resolved:0;
-  const wonValued=won.filter(l=>(l.contractValue||0)>0);
-  const compAvg=wonValued.length?Math.round(wonVal/wonValued.length):0;
+  const wonW=won.filter(decidedInWindow), lostW=lost.filter(decidedInWindow);
+  const resolved=wonW.length+lostW.length;
+  const compClose=resolved?wonW.length/resolved:0;
+  const wonValued=wonW.filter(l=>(l.contractValue||0)>0);
+  const compAvg=wonValued.length?Math.round(wonValued.reduce((s,l)=>s+(l.contractValue||0),0)/wonValued.length):0;
   const a=(state.config&&state.config.salesAssumptions)||{};
   const closeOverride=(a.closeRate!=null&&a.closeRate>0);
   const avgOverride=(a.avgDeal!=null&&a.avgDeal>0);
@@ -9282,7 +9333,7 @@ function salesMath(){
   const dealsToGoal=avgDeal>0?Math.ceil(gap/avgDeal):0;
   const pct=Math.min(100,Math.round(wonVal/Math.max(1,goal)*100));
   const lowHistory=resolved<4;
-  return {won,lost,open,wonVal,openVal,weighted,goal,gap,coverage,resolved,compClose,compAvg,closeRate,avgDeal,closeOverride,avgOverride,remaining,perLead,leadsNeeded,openDealsToClose,dealsToGoal,pct,lowHistory};
+  return {won,lost,wonW,lostW,open,wonVal,openVal,weighted,goal,gap,coverage,resolved,compClose,compAvg,closeRate,avgDeal,closeOverride,avgOverride,remaining,perLead,leadsNeeded,openDealsToClose,dealsToGoal,pct,lowHistory};
 }
 function salesMathLine(){ const M=salesMath();
   if(M.gap<=0) return "Sales math: the "+money(M.goal)+" goal is already reached ("+money(M.wonVal)+" won).";
