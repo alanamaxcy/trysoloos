@@ -1464,6 +1464,12 @@
   /* chart hover tooltip */
   .chart-tip{ position:fixed;z-index:2000;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;box-shadow:0 4px 14px -4px rgba(0,0,0,.4) }
   .chart-tip.show{ opacity:1 }
+  .fin-kpi .spark{ display:block;margin-top:7px }
+  .fin-filter{ display:flex;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap }
+  .leg-btn{ cursor:pointer;user-select:none }
+  .leg-btn.off{ opacity:.35;filter:grayscale(1);text-decoration:line-through }
+  .goal-pace{ position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5 }
+  @media(max-width:720px){ .ws-tabs.fin-tabbar{ flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding-bottom:2px } .ws-tabs.fin-tabbar::-webkit-scrollbar{ display:none } .ws-tabs.fin-tabbar .ws-tab{ white-space:nowrap;flex:0 0 auto;padding:9px 11px } }
   /* subscriptions */
   .sub-head,.sub-row{ display:grid;grid-template-columns:24px 1.4fr 1fr 104px 118px 78px 28px;gap:8px;align-items:center }
   .sub-head{ font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px 0 4px;border-bottom:1px solid var(--line) }
@@ -5839,24 +5845,27 @@ function renderTime(m){
 }
 /* ===== FINANCE DASHBOARD ===== */
 function finActiveMonths(f){ const all=(f&&f.months)||[]; let last=-1; all.forEach((m,i)=>{ if(m.income||m.expenses||m.netProfit)last=i; }); return last>=0?all.slice(0,last+1):[]; }
-function finIncExpChart(months){
+function finIncExpChart(months,mOff){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
+  const off=+mOff||0;
+  const shI=_finSeries.income!==false, shE=_finSeries.expenses!==false;
   const W=680,H=210,padL=52,padR=10,padT=12,padB=30, pw=W-padL-padR, ph=H-padT-padB;
-  const max=Math.max(1,...months.map(m=>Math.max(m.income,m.expenses)));
+  const max=Math.max(1,...months.map(m=>Math.max(shI?m.income:0,shE?m.expenses:0)));
   const gw=pw/n, bw=Math.min(15,gw*0.3);
   const y=v=>padT+ph-(v/max)*ph;
   const grid=[0,0.5,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${money(Math.round(v))}</text>`; }).join("");
   let bars="";
-  months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1;
-    bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" data-tip="${esc(m.month)} · income ${money(m.income)}"></rect>`;
-    bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" data-tip="${esc(m.month)} · expenses ${money(m.expenses)}"></rect>`;
+  months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1, oi=off+i;
+    if(shI)bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" onclick="openFinMonth(${oi})" data-tip="${esc(m.month)} · income ${money(m.income)} · click for detail"></rect>`;
+    if(shE)bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" onclick="openFinMonth(${oi})" data-tip="${esc(m.month)} · expenses ${money(m.expenses)} · click for detail"></rect>`;
     bars+=`<text x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
   });
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span><i style="background:#5e8c61"></i>Income</span><span><i style="background:#CB6E55"></i>Expenses</span></div>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span class="leg-btn ${shI?"":"off"}" onclick="toggleFinSeries('income')" title="Click to show or hide"><i style="background:#5e8c61"></i>Income</span><span class="leg-btn ${shE?"":"off"}" onclick="toggleFinSeries('expenses')" title="Click to show or hide"><i style="background:#CB6E55"></i>Expenses</span></div>`;
 }
-function finCumNetChart(months){
+function finCumNetChart(months,baseCum,mOff){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
-  let cum=0; const pts=months.map(m=>({month:m.month,cum:cum+=(m.netProfit||0)}));
+  const off=+mOff||0;
+  let cum=+baseCum||0; const pts=months.map(m=>({month:m.month,cum:cum+=(m.netProfit||0)}));
   const W=680,H=190,padL=52,padR=10,padT=12,padB=28, pw=W-padL-padR, ph=H-padT-padB;
   const vals=pts.map(p=>p.cum); const max=Math.max(1,...vals,0), min=Math.min(0,...vals), range=Math.max(1,max-min);
   const x=i=>padL+(n<=1?pw/2:(i/(n-1))*pw), y=v=>padT+ph-((v-min)/range)*ph;
@@ -5868,7 +5877,7 @@ function finCumNetChart(months){
     <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" fill="var(--muted)">$0</text>
     <path d="${area}" fill="color-mix(in srgb,#5b7fa6 15%,transparent)"/>
     <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.5"/>
-    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))}"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
+    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" onclick="openFinMonth(${off+i})" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))} · click for detail"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
     ${pts.map((p,i)=>`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((p.month||"").slice(0,3))}</text>`).join("")}
   </svg>`;
 }
@@ -6462,10 +6471,77 @@ function subsDetectedHtml(){
   const rows=_detCache.map(function(d,di){ return '<div class="tx-row" style="grid-template-columns:1.5fr 96px 110px 90px 110px"><span class="n">'+esc(d.name)+'</span><span style="color:var(--ink2)">'+d.cadence+'</span><span class="amt">~'+money(d.amount)+'</span><span style="color:var(--muted);font-size:11.5px">seen '+d.count+'×</span><span style="text-align:right">'+(tracked(d.name)?'<span style="color:#3f7d5a;font-weight:800;font-size:12px">✓ tracked</span>':('<button class="btn btn-ghost btn-sm" onclick="trackDetected('+di+')">Track</button>'))+'</span></div>'; }).join("");
   return '<div class="rsub" style="margin-top:14px;font-weight:800;color:var(--ink)">Detected in your actual books</div><div class="rsub" style="margin-top:2px">Found by scanning your QuickBooks transactions for repeating payees with stable amounts.</div>'+rows;
 }
+/* ---- Overview interactivity: chart range filter, series toggles, month drill-downs ---- */
+let _finRange=0;
+function setFinRange(n){ _finRange=+n||0; if(view==="finance")renderFinance($("#main")); }
+function finViewMonths(f){ const all=finActiveMonths(f); return _finRange>0?all.slice(-_finRange):all; }
+let _finSeries={income:true,expenses:true};
+function toggleFinSeries(k){ _finSeries[k]=!_finSeries[k]; if(!_finSeries.income&&!_finSeries.expenses){ _finSeries.income=true; _finSeries.expenses=true; } if(view==="finance")renderFinance($("#main")); }
+function sparkline(vals,color){ const v=(vals||[]).map(Number); if(v.length<2)return ""; const max=Math.max(...v),min=Math.min(...v); if(max===0&&min===0)return "";
+  const W=96,H=22,range=Math.max(1,max-min);
+  const x=function(i){ return (i/(v.length-1))*(W-4)+2; }, y=function(n){ return H-2-((n-min)/range)*(H-4); };
+  const line=v.map(function(n,i){ return (i?"L":"M")+x(i).toFixed(1)+","+y(n).toFixed(1); }).join(" ");
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:96px;height:22px"><path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" opacity="0.8"/><circle cx="'+x(v.length-1).toFixed(1)+'" cy="'+y(v[v.length-1]).toFixed(1)+'" r="2.4" fill="'+color+'"/></svg>'; }
+function openFinMonth(i){ i=+i; const f=(state.meta&&state.meta.financials)||{}; const all=finActiveMonths(f); const mo=all[i]; if(!mo)return;
+  const key=(f.year||new Date().getFullYear())+"-"+String(i+1).padStart(2,"0");
+  const t=(state.meta&&state.meta.txns)||null; const tx=(t&&Array.isArray(t.list))?t.list.filter(x=>String(x.d||"").slice(0,7)===key):[];
+  openDrawer((mo.month||"Month")+" — detail");
+  const box=function(l,v,c){ return '<div style="flex:1;min-width:96px;background:var(--side);border:1px solid var(--line);border-radius:10px;padding:10px 12px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">'+l+'</div><div style="font-family:var(--disp);font-size:20px;font-weight:800;color:'+c+'">'+money(v)+'</div></div>'; };
+  let h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+box("Income",mo.income,"#3f7d5a")+box("Expenses",mo.expenses,"#CB6E55")+box("Net",mo.netProfit,(mo.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'</div>';
+  if(!tx.length){ h+='<div class="mi-hint">'+((t&&Array.isArray(t.list)&&t.list.length)?'None of your loaded transactions fall in this month — the list is capped at recent activity, so re-load on the <b>Transactions</b> tab if this month is older.':'To see the actual transactions behind this month, open the <b>Transactions</b> tab once and click <b>Load transactions</b>.')+'</div>'; }
+  else { h+='<div class="rsub" style="margin:0 0 4px">'+tx.length+' transaction'+(tx.length===1?'':'s')+' from your books</div>'
+    +tx.slice(0,140).map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px"><span class="tnum" style="color:var(--ink2);width:40px">'+esc(String(x.d||"").slice(5))+'</span><span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.n||x.t||"—")+'</span><span style="color:var(--muted);font-size:11px">'+esc(x.t||"")+'</span><span style="font-weight:800">'+money(Math.round(Math.abs(+x.a||0)))+'</span></div>').join("")
+    +(tx.length>140?'<div class="rsub" style="margin-top:6px">Showing the first 140.</div>':''); }
+  $("#drawerBody").innerHTML=h; $("#drawerFoot").innerHTML="";
+}
+function openPipelineMath(){
+  const open=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage));
+  const M=salesMath(); const total=pipelineOpenVal(), weighted=pipelineWeightedVal(), atClose=pipelineAtCloseVal();
+  const rows=open.map(function(l){ const st=STAGES.find(x=>x.key===l.stage)||{}; const p=Math.round((st.prob||0)*100); return {l:l,st:st,p:p,w:Math.round((l.contractValue||0)*(st.prob||0))}; }).sort((a,b)=>(b.l.contractValue||0)-(a.l.contractValue||0));
+  openDrawer("Cash in pipeline — what these numbers mean");
+  $("#drawerBody").innerHTML='<div class="mi-hint">You have '+open.length+' open deal'+(open.length===1?'':'s')+' worth <b>'+money(total)+'</b> if you won every single one. You won\'t win them all — so there are two honest ways to shrink that number down to reality:</div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Weighted by stage → '+money(weighted)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Each deal counts only part of its value based on how far along it is. A deal at a 60% stage counts 60% of its value; a brand-new lead barely counts. That\'s all "weighted" means.</div></div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">At your close rate → '+money(atClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+money(total)+' × the '+Math.round(M.closeRate*100)+'% of decided deals you historically win'+(M.closeOverride?' (your override)':'')+'. This is tile 4, and it\'s what feeds your year projection.</div></div>'
+    +'<div class="rsub" style="margin:12px 0 4px;font-weight:800;color:var(--ink)">Deal by deal — value · stage · weighted</div>'
+    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(x.st.label||x.l.stage||"")+' · '+x.p+'%</span><span style="font-weight:700;color:var(--ink2)">'+money(x.l.contractValue||0)+'</span><span style="font-weight:800;color:#5b7fa6;min-width:64px;text-align:right">'+money(x.w)+'</span></div>').join("")||'<div class="empty-mini">No open deals right now.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>All open · weighted</span><span>'+money(total)+' · <span style="color:#5b7fa6">'+money(weighted)+'</span></span></div>';
+  $("#drawerFoot").innerHTML="";
+}
+function openBookedList(){
+  const y=new Date().getFullYear();
+  const won=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).sort((a,b)=>(b.contractValue||0)-(a.contractValue||0));
+  const total=won.reduce((s,l)=>s+(l.contractValue||0),0);
+  const bl=function(l){ const b=dealBilling(l); return b==="recurring"?(money(Math.round(dealMonthly(l)))+"/mo"):b==="installments"?"installments":"paid in full"; };
+  openDrawer("Booked in "+y+" — every deal");
+  $("#drawerBody").innerHTML='<div class="mi-hint">The full contract value of every deal you closed this year — what you <b>sold</b>, regardless of when the cash actually arrives. Tile 1 is what\'s arrived; tile 2 is what\'s still coming.</div>'
+    +(won.map(l=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+bl(l)+'</span><span style="font-weight:800;color:#5b7fa6">'+money(l.contractValue||0)+'</span></div>').join("")||'<div class="empty-mini">Nothing booked yet this year.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Booked this year</span><span style="color:#5b7fa6">'+money(total)+'</span></div>';
+  $("#drawerFoot").innerHTML="";
+}
+function openCollectedMath(){
+  const f=(state.meta&&state.meta.financials)||{}; const all=finActiveMonths(f);
+  openDrawer("Cash collected — month by month");
+  $("#drawerBody").innerHTML='<div class="mi-hint">Income from your QuickBooks P&amp;L. Click any month for its actual transactions.</div>'
+    +(all.map((m,i)=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer" onclick="openFinMonth('+i+')"><span style="font-weight:700">'+esc(m.month||"")+' <span style="color:var(--muted);font-size:11px">›</span></span><span style="font-weight:800;color:#3f7d5a">'+money(m.income)+'</span></div>').join("")||'<div class="empty-mini">No monthly data yet.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Collected YTD</span><span style="color:#3f7d5a">'+money(f.income)+'</span></div>';
+  $("#drawerFoot").innerHTML="";
+}
+function openNetMath(){
+  const f=(state.meta&&state.meta.financials)||{}; const all=finActiveMonths(f);
+  const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
+  openDrawer("Net profit — month by month");
+  $("#drawerBody").innerHTML='<div class="mi-hint">What you kept each month: income minus all spending. '+(f.income?('The '+margin+'% margin means you keep about '+Math.max(0,margin)+'¢ of every dollar collected'+(margin<0?' — right now spending is outrunning income':'')+'.'):'')+'</div>'
+    +(all.map((m,i)=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer" onclick="openFinMonth('+i+')"><span style="flex:1;font-weight:700">'+esc(m.month||"")+' <span style="color:var(--muted);font-size:11px">›</span></span><span style="font-size:11.5px;color:var(--ink2);font-weight:600">'+money(m.income)+' − '+money(m.expenses)+'</span><span style="font-weight:800;min-width:64px;text-align:right;color:'+((m.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'">'+money(m.netProfit)+'</span></div>').join("")||'<div class="empty-mini">No monthly data yet.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Net profit YTD</span><span style="color:'+((f.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'">'+money(f.netProfit)+'</span></div>';
+  $("#drawerFoot").innerHTML="";
+}
 function finOverviewHtml(f){
   const now=new Date(); const y=now.getFullYear();
   const monthsElapsed=(f.year&&f.year===y)?(now.getMonth()+1):12;
-  const months=finActiveMonths(f);
+  const allMonths=finActiveMonths(f);
+  const months=finViewMonths(f);
+  const mOff=allMonths.length-months.length;
+  const baseCum=allMonths.slice(0,mOff).reduce(function(s,m){ return s+(m.netProfit||0); },0);
   const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
   const avgBurn=(f.expenses!=null)?Math.round(f.expenses/monthsElapsed):null;
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
@@ -6475,39 +6551,47 @@ function finOverviewHtml(f){
   const collectedPct=goal?Math.min(100,Math.round((f.income||0)/goal*100)):0;
   const projPct=goal?Math.min(100,Math.round(proj.total/goal*100)):0;
   const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
-  const tile=function(l,v,sub,col,click){ return '<div class="fin-kpi"'+(click?(' style="cursor:pointer" onclick="'+click+'" title="Click to see the math"'):'')+'><div class="l">'+l+'</div><div class="v"'+(col?(' style="color:'+col+'"'):'')+'>'+v+'</div><div class="m">'+(sub||'')+(click?' · <span style="color:var(--accent);font-weight:800">see the math</span>':'')+'</div></div>'; };
+  const openN=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).length;
+  const thisYear=(!f.year||f.year===y);
+  const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
+  let _c=0; const cumVals=allMonths.map(function(m){ return _c+=(m.netProfit||0); });
+  const tile=function(l,v,sub,col,click,marker,spark){ return '<div class="fin-kpi"'+(click?(' style="cursor:pointer" onclick="'+click+'" title="Click to open"'):'')+'><div class="l">'+l+'</div><div class="v"'+(col?(' style="color:'+col+'"'):'')+'>'+v+'</div><div class="m">'+(sub||'')+(click?' · <span style="color:var(--accent);font-weight:800">'+(marker||'see the math')+'</span>':'')+'</div>'+(spark||'')+'</div>'; };
+  const seg=function(n,lbl){ return '<button class="'+(_finRange===n?'on':'')+'" onclick="setFinRange('+n+')">'+lbl+'</button>'; };
   return ''
   +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' year-to-date · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
   +'<div class="fin-kpis">'
-  +tile('1 · Cash collected YTD',money(f.income),'actually in the door — from QuickBooks','#3f7d5a')
+  +tile('1 · Cash collected YTD',money(f.income),'actually in the door — from QuickBooks','#3f7d5a','openCollectedMath()','month by month',sparkline(allMonths.map(m=>m.income),'#3f7d5a'))
   +tile('2 · Contracted rest of year',money(r.backlogYear),'signed contracts still to collect in '+y,'#D9A05B','openContractedMath()')
-  +tile('3 · Cash in pipeline',money(pipelineOpenVal()),'open deals · weighted '+money(pipelineWeightedVal()),'#5b7fa6')
-  +tile('4 · At your close rate',money(pipelineAtCloseVal()),'pipeline × '+Math.round(M.closeRate*100)+'% close'+(M.closeOverride?' (your override)':''),'#5b7fa6')
+  +tile('3 · Cash in pipeline',money(pipelineOpenVal()),'if you won '+(openN===1?'your 1 open deal':'all '+openN+' open deals')+' · realistically ~'+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()','what this means')
+  +tile('4 · At your close rate',money(pipelineAtCloseVal()),'pipeline × '+Math.round(M.closeRate*100)+'% close'+(M.closeOverride?' (your override)':''),'#5b7fa6','openPipelineMath()')
   +'</div>'
   +'<div class="fin-kpis">'
   +tile('5 · Projected '+y+' income',money(proj.total),'collected + contracted + pipeline','#3f7d5a','openProjectionMath()')
-  +tile('6 · Booked this year',money(bookedThisYearVal()),'gross contract value signed in '+y,'#5b7fa6')
-  +tile('7 · Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55')
-  +tile('8 · Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a')
+  +tile('6 · Booked this year',money(bookedThisYearVal()),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal')
+  +tile('7 · Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')",'see categories',sparkline(allMonths.map(m=>m.expenses),'#CB6E55'))
+  +tile('8 · Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()','month by month',sparkline(cumVals,'#5b7fa6'))
   +'</div>'
-  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPct+'%</b> · <b>projected '+projPct+'%</b></div>'
+  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPct+'%</b> · <b>projected '+projPct+'%</b>'+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(projPct>=100?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
     +'<div style="position:relative;height:14px;background:var(--side);border-radius:8px;overflow:hidden">'
     +'<div style="position:absolute;inset:0;width:'+projPct+'%;background:color-mix(in srgb,#5b7fa6 45%,transparent)"></div>'
-    +'<div style="position:absolute;inset:0;width:'+collectedPct+'%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div></div>'
-    +'<div class="fin-legend" style="justify-content:flex-start;margin-top:6px"><span><i style="background:#3f7d5a"></i>Collected</span><span><i style="background:color-mix(in srgb,#5b7fa6 55%,transparent)"></i>Projected</span></div>'
+    +'<div style="position:absolute;inset:0;width:'+collectedPct+'%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div>'
+    +(thisYear?('<div class="goal-pace" style="left:'+pace+'%" title="Today — '+pace+'% of the year gone"></div>'):'')
+    +'</div>'
+    +'<div class="fin-legend" style="justify-content:flex-start;margin-top:6px"><span><i style="background:#3f7d5a"></i>Collected</span><span><i style="background:color-mix(in srgb,#5b7fa6 55%,transparent)"></i>Projected</span>'+(thisYear?'<span><i style="background:var(--ink);opacity:.5"></i>Today</span>':'')+'</div>'
     +((qboGap!=null&&Math.abs(qboGap)>=Math.max(500,r.recognizedYTD*0.05))?('<div class="rsub" style="margin-top:8px">Reconciliation: QuickBooks shows '+money(f.income)+' collected vs '+money(r.recognizedYTD)+' your contract terms predict — a '+money(Math.abs(qboGap))+' gap. Usually billing timing, un-entered contract terms, or income outside contracts. Check the <b>Contracts</b> tab.</div>'):'')
     +'</div>'):'')
   +smartInsightsCard()
+  +'<div class="fin-filter"><span style="font-size:12px;font-weight:800;color:var(--ink2)">Charts</span><span class="tvseg">'+seg(3,'Last 3 mo')+seg(6,'Last 6 mo')+seg(0,'Full year')+'</span><span style="font-size:11.5px;color:var(--muted);font-weight:600">click a bar or month for its transactions · click a legend item to hide that series</span></div>'
   +'<div class="fin-row2">'
-  +'<div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div><div class="fin-fill">'+finIncExpChart(months)+'</div></div>'
-  +'<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months)+'</div></div>'
+  +'<div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div><div class="fin-fill">'+finIncExpChart(months,mOff)+'</div></div>'
+  +'<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff)+'</div></div>'
   +'</div>'
   +finExtraRow()
   +'<div class="fin-row2 fin-asym">'
   +'<div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div><div class="fin-fill">'+chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(function(rr){return rr.value>0;}),money(f.income))+'</div></div>'
-  +'<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net</div>'
+  +'<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net — click a month for its transactions</div>'
   +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>'
-  +(months.map(function(mo){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
+  +(months.map(function(mo,i){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer" onclick="openFinMonth('+(mOff+i)+')" title="Click for this month\'s transactions"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+' <span style="color:var(--muted);font-size:10px">›</span></span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
   +'</div></div>';
 }
 function renderFinance(m){
@@ -6516,7 +6600,7 @@ function renderFinance(m){
   setHead("Workspace","Finance","Your money at a glance — live from QuickBooks",
     `<button class="btn btn-ghost btn-sm" onclick="qboSyncRevenue(this)">Sync from QuickBooks</button>`);
   const tab=financeTab();
-  const tabs=`<div class="ws-tabs" style="margin:0 0 16px">${FIN_TABS.map(t=>`<button class="ws-tab ${tab===t[0]?"active":""}" onclick="setFinanceTab('${t[0]}')">${t[1]}</button>`).join("")}</div>`;
+  const tabs=`<div class="ws-tabs fin-tabbar" style="margin:0 0 16px">${FIN_TABS.map(t=>`<button class="ws-tab ${tab===t[0]?"active":""}" onclick="setFinanceTab('${t[0]}')">${t[1]}</button>`).join("")}</div>`;
   let body="";
   if(tab==="sales") body=finSalesHtml();
   else if(tab==="contracts") body=finContractsHtml();
