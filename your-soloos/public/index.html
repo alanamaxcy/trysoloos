@@ -4111,6 +4111,7 @@ function migrate(s){
   if(!Array.isArray(s.automationLog)) s.automationLog=[];
   if(!Array.isArray(s.subscriptions)) s.subscriptions=[];
   s.meta=s.meta||{}; if(s.meta.taxRatePct==null) s.meta.taxRatePct=30; if(s.meta.taxReserved==null) s.meta.taxReserved=0;
+  if(!s.meta.growth) s.meta.growth={lastYearIncome:null,growthPct:20,debtBalance:null,debtMonthly:null};
   if(!s.connections) s.connections={microsoft:false}; if(typeof s.connections.quickbooks!=="boolean")s.connections.quickbooks=false; if(typeof s.connections.slackEnabled!=="boolean")s.connections.slackEnabled=false; if(typeof s.connections.emailFromName!=="string")s.connections.emailFromName=""; if(typeof s.connections.icsUrl!=="string")s.connections.icsUrl=""; if(typeof s.connections.digestEmail!=="string")s.connections.digestEmail=""; (s.pipeline||[]).forEach(l=>{ if(typeof l.contactName!=="string")l.contactName=""; if(typeof l.contactEmail!=="string")l.contactEmail=""; }); if(!Array.isArray(s.links)) s.links=[];
   s.docFolders=s.docFolders||[];
   if(!s.social) s.social=[];
@@ -5799,6 +5800,55 @@ function projectMarginsCard(){
     ${body}
   </div>`;
 }
+/* ===== GROWTH & DEBT PAYOFF — the "20% more each year" plan, made visible ===== */
+function growthCfg(){ state.meta=state.meta||{}; if(!state.meta.growth)state.meta.growth={lastYearIncome:null,growthPct:20,debtBalance:null,debtMonthly:null}; return state.meta.growth; }
+function setGrowthField(k,v){ const g=growthCfg(); v=String(v).replace(/[^0-9.]/g,""); g[k]=(v===""?null:Math.round(+v)); if(k==="growthPct"&&g[k]!=null)g[k]=Math.max(0,Math.min(200,g[k])); save(); if(view==="finance")renderFinance($("#main")); }
+function growthCard(){
+  const g=growthCfg();
+  const f=(state.meta&&state.meta.financials)||null;
+  const income=(f&&f.income!=null)?f.income:null;
+  const now=new Date(); const monthsElapsed=(f&&f.year===now.getFullYear())?(now.getMonth()+1):(now.getMonth()+1);
+  const setup = g.lastYearIncome==null;
+  const inp=(k,val,w,ph)=>`<input type="number" min="0" value="${val==null?"":val}" placeholder="${ph||""}" style="width:${w||110}px;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-weight:700" onchange="setGrowthField('${k}',this.value)">`;
+  const inputsRow=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;align-items:center">
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Last year's income $ ${inp("lastYearIncome",g.lastYearIncome,110)}</label>
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Growth target ${inp("growthPct",g.growthPct==null?20:g.growthPct,56)}%</label>
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Debt remaining $ ${inp("debtBalance",g.debtBalance,100)}</label>
+      <label style="font-size:12px;font-weight:700;color:var(--ink2)">Monthly payment $ ${inp("debtMonthly",g.debtMonthly,84)}</label>
+    </div>`;
+  if(setup){
+    return `<div class="rep-card rep-full" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Path out of debt</h3></div>
+      <div class="rsub">Turn "I need to grow 20% a year to clear the tax debt" into a tracked plan. Enter last year's income to start; add your IRS payment plan if you want the payoff date.</div>
+      ${inputsRow}
+    </div>`;
+  }
+  const target=Math.round(g.lastYearIncome*(1+((g.growthPct==null?20:g.growthPct)/100)));
+  const paceNow=(income!=null&&monthsElapsed)?Math.round(income/monthsElapsed*12):null;
+  const pct=(income!=null&&target)?Math.min(100,Math.round(income/target*100)):0;
+  const pacePct=(paceNow!=null&&target)?Math.round(paceNow/target*100):null;
+  const onTrack=pacePct!=null&&pacePct>=100;
+  const needMo=(income!=null&&target)?Math.max(0,Math.round((target-income)/Math.max(1,12-monthsElapsed))):null;
+  let payoffTxt="";
+  if(g.debtBalance!=null&&g.debtBalance>0&&g.debtMonthly>0){
+    const months=Math.ceil(g.debtBalance/g.debtMonthly);
+    const d=new Date(now.getFullYear(),now.getMonth()+months,1);
+    payoffTxt=`${money(g.debtBalance)} left · ${money(g.debtMonthly)}/mo → debt-free ${d.toLocaleDateString("en-US",{month:"long",year:"numeric"})} (${months} payment${months===1?"":"s"})`;
+  } else if(g.debtBalance===0){ payoffTxt="Debt cleared 🎉"; }
+  const box=(l,v,s,col)=>`<div class="box"><div class="l">${l}</div><div class="v" style="${col?`color:${col}`:""}">${v}</div><div class="s">${s||""}</div></div>`;
+  return `<div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Path out of debt</h3><span style="margin-left:auto;color:${onTrack?"#3f7d5a":"#CB6E55"};font-size:12px;font-weight:800">${pacePct!=null?(onTrack?"On pace ✓":"Behind pace"):""}</span></div>
+    <div class="rsub">Grow ${g.growthPct==null?20:g.growthPct}% over last year's ${money(g.lastYearIncome)} → this year's target is <b>${money(target)}</b>.</div>
+    <div class="fin-fc" style="margin-top:6px">
+      ${box("This year's target",money(target),(g.growthPct==null?20:g.growthPct)+"% over last year","#5b7fa6")}
+      ${box("Collected so far",income!=null?money(income):"—",pct+"% of target","#3f7d5a")}
+      ${box(onTrack?"Pace (annualized)":"Needed per month",onTrack?money(paceNow):(needMo!=null?money(needMo)+"/mo":"—"),onTrack?(pacePct+"% of target — keep going"):("for the remaining "+(12-monthsElapsed)+" months"),onTrack?"#3f7d5a":"#CB6E55")}
+    </div>
+    <div style="height:12px;background:var(--side);border-radius:7px;overflow:hidden;margin-top:4px"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#5b7fa6,#3f7d5a);border-radius:7px"></div></div>
+    ${payoffTxt?`<div class="rsub" style="margin-top:10px">Payment plan: <b>${payoffTxt}</b></div>`:""}
+    ${inputsRow}
+  </div>`;
+}
 /* ===== AI CFO — feeds live financials to Claude for a CFO-style brief ===== */
 function aiCfoCard(){
   return `<div class="ai-panel" id="aiCfoCard" style="margin-bottom:16px">
@@ -5830,6 +5880,7 @@ Annual revenue goal ${money(goal)}.
 Recurring subscriptions ${money(subsMo)}/mo (${subsLines}).
 Project margins: ${projLines}.
 Taxes: reserving ${rate}% of net; should have set aside ${money(recommended)}, have reserved ${money(reserved)}.
+Growth plan: ${(()=>{const g=growthCfg(); return g.lastYearIncome!=null?`last year ${money(g.lastYearIncome)}, target +${g.growthPct==null?20:g.growthPct}% = ${money(Math.round(g.lastYearIncome*(1+(g.growthPct==null?20:g.growthPct)/100)))}${(g.debtBalance!=null&&g.debtMonthly>0)?`; IRS debt ${money(g.debtBalance)} at ${money(g.debtMonthly)}/mo`:""}`:"not configured";})()}.
 Context: last year I ran a deficit and didn't save for taxes, so I'm on an IRS payment plan. I need to grow ~20% per year to clear the debt and get into real profit.
 Give me the CFO brief and specific moves.`;
     const txt=await callClaude([{role:"user",content:usr}],sys,{max_tokens:900});
@@ -5893,6 +5944,7 @@ function renderFinance(m){
       ${months.map(mo=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">${esc((mo.month||"").slice(0,3))}</span><span style="text-align:right;color:var(--ink2)">${money(mo.income)}</span><span style="text-align:right;color:var(--ink2)">${money(mo.expenses)}</span><span style="text-align:right;font-weight:800;color:${mo.netProfit>=0?"#3f7d5a":"#c1604a"}">${money(mo.netProfit)}</span></div>`).join("")||'<div class="rsub">No monthly data.</div>'}
     </div>
   </div>
+  ${growthCard()}
   ${projectMarginsCard()}
   ${aiCfoCard()}
   ${subsCard()}
