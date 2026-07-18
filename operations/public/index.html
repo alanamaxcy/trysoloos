@@ -707,6 +707,15 @@
   .ct-row .nm{ font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
   .ct-row .calc{ font-size:11.5px;color:var(--ink2);font-weight:700;text-align:right;font-variant-numeric:tabular-nums }
   @media(max-width:860px){ .ct-head{ display:none } .ct-row{ grid-template-columns:1fr 1fr;row-gap:6px } }
+  /* insights / AR / cash-flow */
+  .si-row{ display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:13px;color:var(--ink);line-height:1.45 }
+  .si-row:first-child{ border-top:none }
+  .si-dot{ width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:5px }
+  .ar-bar{ height:12px;border-radius:7px;overflow:hidden;display:flex;background:var(--side);border:1px solid var(--line);margin:10px 0 8px }
+  .ar-bar i{ height:100%;min-width:2px }
+  .cf-head,.cf-row{ display:grid;grid-template-columns:56px 1fr 1fr 1fr;gap:8px;align-items:center;font-size:12.5px }
+  .cf-head{ font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 0 4px;border-bottom:1px solid var(--line) }
+  .cf-row{ padding:6px 0;border-top:1px solid var(--line) } .cf-row:first-of-type{ border-top:none }
   .rep-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .rep-card h3{font-family:var(--disp);margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
   .rep-card .rsub{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:14px}
@@ -6050,6 +6059,10 @@ function cfoContext(){
   const scrub=s=>String(s||"").replace(/[\r\n\t]+/g," ").replace(/[<>{}`]/g,"").slice(0,60);
   const detLines=det.slice(0,10).map(d=>`${scrub(d.name)} ~${money(d.amount)} ${d.cadence} (seen ${d.count}x, ≈${money(d.monthly)}/mo)`).join("; ")||"none detected";
   const bigLines=tx.slice(0,80).slice().sort((a,b)=>Math.abs(+b.a||0)-Math.abs(+a.a||0)).slice(0,12).map(x=>`${scrub(x.d)} ${scrub(x.t)} ${scrub(x.n||x.ac||"?")} ${money(Math.round(+x.a||0))}`).join("; ")||"not loaded";
+  const arL=(f.ar&&f.ar.total>0)?(money(f.ar.total)+" outstanding ("+((f.ar.customers||[]).slice(0,5).map(c=>scrub(c.name)+" "+money(c.total)+(c.overdue>0?" ("+money(c.overdue)+" overdue)":"")).join(", "))+")"):"none reported";
+  const catL=(f.expenseCats||[]).slice(0,8).map(c=>scrub(c.name)+" "+money(c.total)).join(", ")||"n/a";
+  const hrsC=finHoursYTD(); const rateL=(hrsC.total>=5&&f.income>0)?(money(Math.round(f.income/hrsC.total))+"/hr overall over "+Math.round(hrsC.total)+"h ("+(hrsC.client>0?money(Math.round(f.income/hrsC.client))+"/hr client-facing, "+Math.round(hrsC.client/hrsC.total*100)+"% utilization":"no client hours")+")"):"insufficient tracked time";
+  const insL=finInsightsList().map(i=>i.text).join(" | ")||"none";
   return `Year ${f.year||new Date().getFullYear()} year-to-date:
 Income ${money(f.income)}; Expenses ${money(f.expenses)}; Net profit ${money(net)} (${f.income?Math.round(net/f.income*100):0}% margin).
 By month: ${monthly||'n/a'}.
@@ -6060,10 +6073,115 @@ Tracked subscriptions ${money(subsMo)}/mo (${subsLines}).
 Recurring charges detected from actual QuickBooks transactions: ${detLines}.
 Largest recent transactions (actual books): ${bigLines}.
 Project margins: ${projLines}.
+Accounts receivable: ${arL}.
+Spending by category YTD: ${catL}.
+Effective hourly rate: ${rateL}.
+Auto-computed insights: ${insL}.
 Taxes: reserving ${rate}% of net; should have set aside ${money(recommended)}, have reserved ${money(reserved)}.
 Growth plan: ${(()=>{const g=growthCfg(); return g.lastYearIncome!=null?`last year ${money(g.lastYearIncome)}, target +${g.growthPct==null?20:g.growthPct}% = ${money(Math.round(g.lastYearIncome*(1+(g.growthPct==null?20:g.growthPct)/100)))}${(g.debtBalance!=null&&g.debtMonthly>0)?`; IRS debt ${money(g.debtBalance)} at ${money(g.debtMonthly)}/mo`:""}`:"not configured";})()}.
 Background: last year ran a deficit with no tax savings, now on an IRS payment plan; needs ~20%/yr growth to clear the debt and reach real profit.`;
 }
+/* ===== INSIGHTS ENGINE — plain-language findings + consultant KPIs ===== */
+/* What lands from a deal in a specific month (y, mi 0-11) — used for cash-flow forecast. */
+function dealMonthAmount(l,y,mi){
+  const bill=dealBilling(l); const st=dealStart(l); const abs=y*12+mi;
+  const sAbs=st?(st.getFullYear()*12+st.getMonth()):null;
+  if(bill==="paidfull"){ return (sAbs!=null&&abs===sAbs)?Math.round(l.contractValue||0):0; }
+  const mo=dealMonthly(l); const s0=(sAbs==null)?(y*12):sAbs;
+  if(abs<s0)return 0;
+  if(bill==="recurring")return Math.round(mo);
+  return (abs<s0+dealTerm(l))?Math.round(mo):0;
+}
+function finHoursYTD(){ const y=new Date().getFullYear(); const y0=new Date(y,0,1).getTime(); let all=0,client=0;
+  (state.timeLog||[]).forEach(e=>{ if((e.start||0)>=y0){ all+=e.seconds||0; if(e.projectId)client+=e.seconds||0; } });
+  (state.projects||[]).forEach(p=>(p.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{ if((e.start||0)>=y0){ all+=e.seconds||0; client+=e.seconds||0; } })));
+  return {total:all/3600,client:client/3600}; }
+function finInsightsList(){
+  const out=[]; const f=(state.meta&&state.meta.financials)||{};
+  const months=finActiveMonths(f); const nAct=months.length;
+  if(nAct>=2){ const a=months[nAct-2],b=months[nAct-1];
+    if(a.income>200){ const pct=Math.round((b.income-a.income)/a.income*100);
+      if(Math.abs(pct)>=15) out.push({tone:pct>=0?"good":"warn",text:(b.month||"").slice(0,3)+" income "+money(b.income)+" — "+(pct>=0?"up ":"down ")+Math.abs(pct)+"% vs "+(a.month||"").slice(0,3)+"."}); } }
+  let catHits=0;
+  (f.expenseCats||[]).forEach(c=>{ if(catHits>=2)return; const ms=(c.months||[]).slice(0,nAct); if(ms.length>=4){
+    const last=ms[ms.length-1]; const prev=ms.slice(-4,-1); const avg=prev.reduce((s,v)=>s+v,0)/3;
+    if(avg>=50&&last>=avg*1.4&&(last-avg)>=75){ catHits++; out.push({tone:"warn",text:c.name+" spend "+money(Math.round(last))+" last month — "+Math.round((last-avg)/avg*100)+"% above its 3-month average."}); } } });
+  const y=new Date().getFullYear(), cm=new Date().getMonth();
+  const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
+  const recTot=won.reduce((s,l)=>s+dealRevenueYear(l,y,cm).recognizedYTD,0);
+  if(recTot>0&&won.length>1){ const top=won.map(l=>({n:l.name,v:dealRevenueYear(l,y,cm).recognizedYTD})).sort((a,b)=>b.v-a.v)[0];
+    const share=Math.round(top.v/recTot*100);
+    if(share>=40) out.push({tone:"warn",text:top.n+" is "+share+"% of your recognized revenue — concentration risk if they churn."}); }
+  const ar=f.ar; if(ar&&ar.total>0){ const over=ar.total-((ar.buckets&&ar.buckets.current)||0);
+    out.push({tone:over>0?"warn":"info",text:"Clients owe you "+money(ar.total)+(over>0?(" — "+money(over)+" of it is past due. Chase it; it's already earned."):" — none past due.")}); }
+  const goal=(typeof revGoalTarget==="function")?revGoalTarget():0;
+  if(goal&&f.income!=null){ const r=contractRecon(); const gapG=goal-r.expectedFullYear;
+    if(gapG>300){ const openW=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).reduce((s,l)=>{const st=STAGES.find(x=>x.key===l.stage);return s+(l.contractValue||0)*((st&&st.prob)||0);},0);
+      const cov=openW/gapG;
+      out.push({tone:cov>=2?"good":cov>=1?"info":"warn",text:"Weighted pipeline "+money(Math.round(openW))+" vs a "+money(Math.round(gapG))+" gap to goal — "+cov.toFixed(1)+"x coverage"+(cov<1?" (thin — add pipeline now; deals close slower than you think).":cov>=2?" (strong).":".")});
+    } else out.push({tone:"good",text:"Contracts already cover your "+money(goal)+" goal for this calendar year."}); }
+  const hrs=finHoursYTD();
+  if(hrs.total>=20&&f.income>0){ out.push({tone:"info",text:"Effective rate "+money(Math.round(f.income/hrs.total))+"/hr over "+Math.round(hrs.total)+" tracked hours"+(hrs.client>0?(" — "+money(Math.round(f.income/hrs.client))+"/hr on client work ("+Math.round(hrs.client/hrs.total*100)+"% utilization)."):".")}); }
+  const subsYr=subsMonthlyTotal()*12;
+  if(subsYr>0&&f.expenses>0){ const sh=Math.round(subsYr/f.expenses*100); if(sh>=15) out.push({tone:"warn",text:"Subscriptions run "+money(Math.round(subsYr))+"/yr — "+sh+"% of your total spend."}); }
+  const net=f.netProfit, rate=taxRate(), reserved=+((state.meta&&state.meta.taxReserved))||0;
+  if(net>0){ const shortT=Math.round(net*rate/100)-reserved; if(shortT>300) out.push({tone:"warn",text:"Tax reserve is "+money(shortT)+" behind the "+rate+"% target — top it up before the next quarterly."}); }
+  if(net!=null&&net<0&&nAct>0){ out.push({tone:"warn",text:"Running at a loss — "+money(Math.round(Math.abs(net)/nAct))+"/mo average burn."}); }
+  return out;
+}
+function smartInsightsCard(){
+  const list=finInsightsList(); if(!list.length)return "";
+  const dot=t=>t==="good"?"#3f7d5a":t==="warn"?"#CB6E55":"#5b7fa6";
+  const rows=list.slice(0,7).map(i=>'<div class="si-row"><span class="si-dot" style="background:'+dot(i.tone)+'"></span><span>'+esc(i.text)+'</span></div>').join("");
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Smart insights</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">computed from your live data</span></div><div style="margin-top:6px">'+rows+'</div></div>';
+}
+function arCard(){
+  const f=(state.meta&&state.meta.financials)||{}; const ar=f.ar;
+  if(!ar||!(ar.total>0))return "";
+  const bks=[["current","Current","#5e8c61"],["d30","1–30d","#D9A05B"],["d60","31–60d","#CB6E55"],["d90","61–90d","#c1604a"],["d90p","90d+","#8a3d2e"]];
+  const segs=bks.map(function(b){ const v=(ar.buckets&&ar.buckets[b[0]])||0; return v>0?('<i style="width:'+(v/ar.total*100)+'%;background:'+b[2]+'" title="'+b[1]+' '+money(v)+'"></i>'):''; }).join("");
+  const legend=bks.map(function(b){ const v=(ar.buckets&&ar.buckets[b[0]])||0; return v>0?('<span><i style="background:'+b[2]+'"></i>'+b[1]+' '+money(v)+'</span>'):''; }).join("");
+  const rows=(ar.customers||[]).slice(0,6).map(c=>'<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+'</span>'+(c.overdue>0?('<span style="color:#c1604a;font-size:11px;font-weight:800">'+money(c.overdue)+' overdue</span>'):'')+'<span style="font-weight:800">'+money(c.total)+'</span></div>').join("");
+  return '<div class="rep-card"><h3>Who owes you</h3><div class="rsub">Accounts receivable, by age — '+money(ar.total)+' outstanding</div><div class="ar-bar">'+segs+'</div><div class="fin-legend" style="justify-content:flex-start">'+legend+'</div>'+rows+'</div>';
+}
+function cashFlowCard(){
+  const f=(state.meta&&state.meta.financials)||{}; if(f.income==null)return "";
+  const now=new Date(); const y=now.getFullYear(), cm=now.getMonth();
+  const monthsElapsed=(f.year===y)?(cm+1):12;
+  const avgExp=(f.expenses!=null)?f.expenses/monthsElapsed:0;
+  const debt=(typeof growthCfg==="function"&&(+growthCfg().debtMonthly||0)>0)?+growthCfg().debtMonthly:0;
+  const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
+  let cum=0; const rows=[];
+  for(let k=1;k<=6;k++){ const abs=y*12+cm+k; const yy=Math.floor(abs/12), mi=abs%12;
+    const inflow=won.reduce((s,l)=>s+dealMonthAmount(l,yy,mi),0);
+    const net=Math.round(inflow-avgExp-debt); cum+=net;
+    rows.push({label:new Date(yy,mi,1).toLocaleDateString("en-US",{month:"short"}),inflow:Math.round(inflow),net:net,cum:Math.round(cum)}); }
+  const body=rows.map(r=>'<div class="cf-row"><span style="font-weight:700">'+r.label+'</span><span style="text-align:right;color:var(--ink2)">'+money(r.inflow)+'</span><span style="text-align:right;font-weight:800;color:'+(r.net>=0?"#3f7d5a":"#c1604a")+'">'+money(r.net)+'</span><span style="text-align:right;font-weight:700;color:'+(r.cum>=0?"var(--ink)":"#c1604a")+'">'+money(r.cum)+'</span></div>').join("");
+  return '<div class="rep-card"><h3>Cash flow, next 6 months</h3><div class="rsub">Contracted inflows minus your average spend ('+money(Math.round(avgExp))+'/mo)'+(debt?(' and the '+money(debt)+'/mo IRS payment'):'')+'</div><div class="cf-head"><span>Month</span><span style="text-align:right">Contracted in</span><span style="text-align:right">Est. net</span><span style="text-align:right">Running</span></div>'+body+'</div>';
+}
+function rateCard(){
+  const f=(state.meta&&state.meta.financials)||{}; const hrs=finHoursYTD();
+  if(!(hrs.total>=5)||!(f.income>0))return "";
+  const overall=Math.round(f.income/hrs.total);
+  const client=hrs.client>0?Math.round(f.income/hrs.client):null;
+  const util=hrs.total?Math.round(hrs.client/hrs.total*100):0;
+  const perProj=(state.projects||[]).filter(p=>!p.archived&&projRevenue(p)>0).map(function(p){
+    const secs=(p.tasks||[]).reduce((s,t)=>s+taskSeconds(t),0)+bucketSeconds("proj:"+p.id);
+    return {n:p.name,rate:secs>0?Math.round(projRevenue(p)/(secs/3600)):null,hrs:secs/3600}; }).filter(x=>x.rate!=null&&x.hrs>=2).sort((a,b)=>b.rate-a.rate);
+  const rows=perProj.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.n)+'</span><span style="color:var(--muted);font-size:11px">'+Math.round(x.hrs)+'h</span><span style="font-weight:800;color:'+(x.rate>=100?"#3f7d5a":x.rate>=50?"#D9A05B":"#c1604a")+'">'+money(x.rate)+'/hr</span></div>').join("");
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Your effective rate</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">income ÷ tracked time</span></div><div class="fin-fc" style="margin-top:8px"><div class="box"><div class="l">Overall</div><div class="v">'+money(overall)+'/hr</div><div class="s">across '+Math.round(hrs.total)+' hours this year</div></div><div class="box"><div class="l">On client work</div><div class="v" style="color:#3f7d5a">'+(client!=null?(money(client)+'/hr'):'—')+'</div><div class="s">'+Math.round(hrs.client)+' client hours</div></div><div class="box"><div class="l">Utilization</div><div class="v" style="color:'+(util>=50?"#3f7d5a":"#D9A05B")+'">'+util+'%</div><div class="s">client hours ÷ all tracked</div></div></div>'+(rows?('<div class="rsub" style="margin-top:10px">By project — where your time is worth the most</div>'+rows):'')+'</div>';
+}
+function expenseCatsCard(){
+  const f=(state.meta&&state.meta.financials)||{}; const cats=f.expenseCats||[];
+  if(!cats.length)return "";
+  const nAct=finActiveMonths(f).length;
+  const rows=cats.slice(0,10).map(function(c){ const ms=(c.months||[]).slice(0,nAct); let trend="";
+    if(ms.length>=4){ const last=ms[ms.length-1]; const avg=ms.slice(-4,-1).reduce((s,v)=>s+v,0)/3;
+      if(avg>=25){ const d=Math.round((last-avg)/avg*100); if(Math.abs(d)>=20) trend='<span style="font-size:11px;font-weight:800;color:'+(d>0?"#c1604a":"#3f7d5a")+'">'+(d>0?"▲ ":"▼ ")+Math.abs(d)+'%</span>'; } }
+    return '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.name)+'</span>'+trend+'<span style="font-weight:800">'+money(c.total)+'</span></div>'; }).join("");
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Spending by category</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">from your P&amp;L · arrows vs 3-mo avg</span></div><div style="margin-top:6px">'+rows+'</div></div>';
+}
+function finExtraRow(){ const a=arCard(), c=cashFlowCard(); if(!a&&!c)return ""; return '<div class="fin-row2">'+a+c+'</div>'; }
 function finOverviewHtml(f){
   const now=new Date();
   const monthsElapsed=(f.year&&f.year===now.getFullYear())?(now.getMonth()+1):12;
@@ -6088,6 +6206,7 @@ function finOverviewHtml(f){
     ${kpi("Net profit",money(f.netProfit),margin+"% margin",f.netProfit>=0?"#3f7d5a":"#c1604a")}
     ${kpi("Avg monthly income",money(avgIncome),"run rate","#5b7fa6")}
   </div>
+  ${smartInsightsCard()}
   ${contractReconCard()}
   <div class="rep-card rep-full" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Forecast to year-end</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">run-rate from ${monthsElapsed} mo</span></div>
@@ -6103,6 +6222,7 @@ function finOverviewHtml(f){
     <div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div><div class="fin-fill">${finIncExpChart(months)}</div></div>
     <div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">${finCumNetChart(months)}</div></div>
   </div>
+  ${finExtraRow()}
   <div class="fin-row2 fin-asym">
     <div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div><div class="fin-fill">${chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(r=>r.value>0),money(f.income))}</div></div>
     <div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net</div>
@@ -6121,7 +6241,7 @@ function renderFinance(m){
   let body="";
   if(tab==="contracts") body=finContractsHtml();
   else if(tab==="transactions") body=finTransactionsHtml();
-  else if(tab==="costs") body=(projectMarginsCard()||`<div class="rep-card rep-full" style="margin-bottom:16px"><h3>Project margins</h3><div class="rsub">Set revenue and direct costs (like subcontractors) on any project's Overview tab, and every project's margin will rank here.</div></div>`)+subsCard();
+  else if(tab==="costs") body=rateCard()+expenseCatsCard()+(projectMarginsCard()||`<div class="rep-card rep-full" style="margin-bottom:16px"><h3>Project margins</h3><div class="rsub">Set revenue and direct costs (like subcontractors) on any project's Overview tab, and every project's margin will rank here.</div></div>`)+subsCard();
   else if(tab==="taxes") body=taxCard()+growthCard();
   else if(tab==="ai") body=finAiHtml();
   else {
@@ -8674,7 +8794,7 @@ function qboConnect(){ window.location.href="/api/qbo-connect"; }
 function outlookConnect(){ window.location.href="/api/outlook-connect"; }
 async function outlookDisconnect(btn){ if(!await confirmModal("Disconnect Outlook? You'll need to reconnect to send from your mailbox again.",{title:"Disconnect Outlook",okLabel:"Disconnect",cancelLabel:"Keep connected"}))return; const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Disconnecting\u2026"; await fetch("/api/outlook-disconnect",{method:"POST"}); await refreshConnStatus(); toast("Outlook disconnected"); renderSettings($("#main")); }catch(e){ toast("Could not disconnect."); } finally{ if(btn)btn.textContent=orig||"Disconnect"; } }
 async function outlookSendTest(btn){ const to=(_connStatus&&_connStatus.outlookEmail)||""; if(!to){ toast("Connect Outlook first."); return; } const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending\u2026"; const r=await fetch("/api/outlook-send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({to,subject:"Good Work HQ \u2014 test email",html:'<p>This is a <b>test</b> from Good Work HQ. If this arrived with a working <a href="https://goodworkhq.co">link</a>, Outlook sending is live.</p>'})}); const d=await r.json(); toast(d.ok?("Test sent to "+to):(d.error||"Send failed")); }catch(e){ toast("Could not reach the Outlook send function. Deploy to Netlify with your MS env vars set."); } finally{ if(btn)btn.textContent=orig||"Send test to myself"; } }
-async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); render(); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
+async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],expenseCats:Array.isArray(d.expenseCats)?d.expenseCats.slice(0,12):[],incomeCats:Array.isArray(d.incomeCats)?d.incomeCats.slice(0,8):[],ar:(d.ar&&typeof d.ar==="object")?d.ar:null,year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); render(); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
 async function slackTest(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending…"; const r=await fetch("/api/notify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({channel:"slack",text:"Test from Good Work HQ. Your Slack notifications are wired up."})}); const d=await r.json(); toast(d.ok?"Sent to Slack":(d.error||"Slack is not configured yet.")); }catch(e){ toast("Could not reach the notify function. Deploy to Netlify with SLACK_WEBHOOK_URL set."); } finally{ if(btn)btn.textContent=orig||"Send test"; } }
 async function connInfo(){ await alertModal("Slack & SendGrid run from your Automations.\n\nTo make them live you'll add a Slack incoming-webhook URL and a SendGrid API key to a Netlify function, then point an automation at it. The automation rules engine is already built in — see the README for the wiring steps."); }
 function setRevMode(mode){ state.meta=state.meta||{}; state.meta.revenueMode=mode; save(); renderSettings($("#main")); }
