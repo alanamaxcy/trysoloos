@@ -171,7 +171,17 @@ export default async (req) => {
       if (ra.ok) ar = parseAging(await ra.json());
       else console.error("[qbo] AR report failed", { status: ra.status, intuit_tid: ra.headers.get("intuit_tid") || "" });
     } catch (e) { console.error("[qbo] AR fetch error", { error: String(e) }); }
-    return json({ ...fin, ar, year, source: "QuickBooks Profit & Loss", intuit_tid: tid });
+    // Also pull last year's P&L so the app can filter charts to "Last year" and
+    // show year-over-year comparisons. Non-fatal if unavailable.
+    let prev = null;
+    try {
+      const py = year - 1;
+      const pu = base + "/v3/company/" + tok.realmId + "/reports/ProfitAndLoss?start_date=" + py + "-01-01&end_date=" + py + "-12-31&summarize_column_by=Month&minorversion=70";
+      const pr = await fetch(pu, { headers: { authorization: "Bearer " + tok.access_token, accept: "application/json" } });
+      if (pr.ok) { const pp = parsePnl(await pr.json()); prev = { year: py, income: pp.income, expenses: pp.expenses, cogs: pp.cogs, netProfit: pp.netProfit, months: pp.months }; }
+      else console.error("[qbo] prior-year report failed", { status: pr.status, intuit_tid: pr.headers.get("intuit_tid") || "" });
+    } catch (e) { console.error("[qbo] prior-year fetch error", { error: String(e) }); }
+    return json({ ...fin, ar, prev, year, source: "QuickBooks Profit & Loss", intuit_tid: tid });
   } catch (e) {
     console.error("[qbo] revenue sync error", { error: String(e) });
     return json({ error: String(e) });
