@@ -680,6 +680,17 @@
   .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
   .fin-costrow{display:grid;grid-template-columns:minmax(240px,0.85fr) minmax(340px,1.9fr);gap:16px;align-items:start;margin-bottom:16px}
   @media(max-width:760px){ .fin-costrow{grid-template-columns:1fr} }
+  /* project profitability */
+  .proj-fin-grid{ display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:4px }
+  @media(max-width:640px){ .proj-fin-grid{ grid-template-columns:repeat(2,1fr) } }
+  .pf-tile{ background:var(--side);border:1px solid var(--line);border-radius:10px;padding:10px 12px }
+  .pf-tile .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted) }
+  .pf-tile .v{ font-family:var(--disp);font-size:20px;font-weight:800;margin-top:2px }
+  .pf-tile .v input{ font:inherit;font-size:18px;font-weight:800;border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:2px 6px;color:var(--ink) }
+  .pcost-row{ display:grid;grid-template-columns:1fr 132px 28px;gap:8px;align-items:center;margin-top:6px }
+  .pcost-row input{ border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:6px 8px;font:inherit;font-size:12.5px;color:var(--ink);width:100% }
+  .pcost-amt{ display:flex;align-items:center;gap:2px;font-weight:700;color:var(--ink2) } .pcost-amt input{ text-align:right }
+  .pcost-del{ background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px } .pcost-del:hover{ color:#c1604a }
   .rep-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .rep-card h3{font-family:var(--disp);margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
   .rep-card .rsub{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:14px}
@@ -4103,7 +4114,7 @@ function migrate(s){
   if(!s.connections) s.connections={microsoft:false}; if(typeof s.connections.quickbooks!=="boolean")s.connections.quickbooks=false; if(typeof s.connections.slackEnabled!=="boolean")s.connections.slackEnabled=false; if(typeof s.connections.emailFromName!=="string")s.connections.emailFromName=""; if(typeof s.connections.icsUrl!=="string")s.connections.icsUrl=""; if(typeof s.connections.digestEmail!=="string")s.connections.digestEmail=""; (s.pipeline||[]).forEach(l=>{ if(typeof l.contactName!=="string")l.contactName=""; if(typeof l.contactEmail!=="string")l.contactEmail=""; }); if(!Array.isArray(s.links)) s.links=[];
   s.docFolders=s.docFolders||[];
   if(!s.social) s.social=[];
-  (s.projects||[]).forEach(p=>{ if(!Array.isArray(p.docs))p.docs=[]; if(p.internal===undefined)p.internal=false; });
+  (s.projects||[]).forEach(p=>{ if(!Array.isArray(p.docs))p.docs=[]; if(p.internal===undefined)p.internal=false; if(!Array.isArray(p.costs))p.costs=[]; if(p.revenue===undefined)p.revenue=null; });
   if(!s.notes){ s.notes=[]; const j=s.journal||{}; Object.keys(j).forEach(k=>{ if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&j[k]&&stripHtml(j[k]).trim()){ const dt=new Date(k+"T00:00:00"); s.notes.push({id:uid(),title:dt.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}),body:j[k],updatedAt:dt.getTime()||Date.now(),pinned:false}); } }); }
   if(!s.habits) s.habits=[{id:uid(),name:"Drink water",icon:"droplet",kind:"count",target:8,history:{}},{id:uid(),name:"Stand / stretch break",icon:"personstanding",kind:"count",target:5,history:{}},{id:uid(),name:"10-minute walk",icon:"walk",kind:"check",target:1,history:{}},{id:uid(),name:"Focus",icon:"clock",kind:"count",target:90,auto:"focus",history:{}}];
   if(s.habits&&!s.habits.some(x=>x.auto==="focus")) s.habits.push({id:uid(),name:"Focus",icon:"clock",kind:"count",target:90,auto:"focus",history:{}});
@@ -4980,6 +4991,7 @@ function drawProjOverview(proj){ const b=$("#wsBody"); if(!b)return; const tasks
      <div class="ws-stat"><div class="big">${fmtDur(total)}</div><div class="lbl">Total tracked</div></div>
      <div class="ws-stat"><div class="big">${fmtDur(monSecs)}</div><div class="lbl">This month</div></div>
    </div>
+   ${projProfitSection(proj)}
    ${tasks.length?`<div class="ws-section"><h3>Status</h3><div class="ws-statusbar">${bar}</div><div class="ws-legend">${legend}</div></div>`:""}
    <div class="ws-section"><h3>Overdue</h3>${overdue.length?overdue.map(dueRow).join(""):'<div class="empty-mini">Nothing overdue.</div>'}</div>
    <div class="ws-section"><h3>Due in the next 7 days</h3>${dueSoon.length?dueSoon.map(dueRow).join(""):'<div class="empty-mini">Nothing due this week.</div>'}</div>
@@ -5749,6 +5761,44 @@ function bindChartTips(root){
     el.addEventListener("mouseleave",()=>tip.classList.remove("show"));
   });
 }
+/* ===== PROJECT MARGINS — revenue minus direct costs (subcontractors) per project ===== */
+function projCosts(p){ if(!Array.isArray(p.costs))p.costs=[]; return p.costs; }
+function projCostTotal(p){ return projCosts(p).reduce((s,c)=>s+(+c.amount||0),0); }
+function projRevenue(p){ return +p.revenue||0; }
+function addProjCost(pid){ const p=(state.projects||[]).find(x=>x.id===pid); if(!p)return; projCosts(p).push({id:uid(),label:"",amount:0}); save(); drawProjOverview(p); }
+function updProjCost(pid,cid,field,val){ const p=(state.projects||[]).find(x=>x.id===pid); if(!p)return; const c=projCosts(p).find(x=>x.id===cid); if(!c)return; if(field==="amount")val=+String(val).replace(/[^0-9.]/g,"")||0; c[field]=val; save(); if(field==="amount")drawProjOverview(p); }
+function delProjCost(pid,cid){ const p=(state.projects||[]).find(x=>x.id===pid); if(!p)return; p.costs=projCosts(p).filter(x=>x.id!==cid); save(); drawProjOverview(p); }
+function setProjRevenue(pid,val){ const p=(state.projects||[]).find(x=>x.id===pid); if(!p)return; p.revenue=+String(val).replace(/[^0-9.]/g,"")||0; save(); drawProjOverview(p); }
+function projProfitSection(proj){
+  const rev=projRevenue(proj), cost=projCostTotal(proj), gp=rev-cost, mg=rev?Math.round(gp/rev*100):null;
+  const mgCol=mg==null?"var(--ink)":(mg>=50?"#3f7d5a":mg>=25?"#D9A05B":"#c1604a");
+  const costRows=projCosts(proj).map(c=>`<div class="pcost-row"><input class="pcost-label" value="${esc(c.label||"")}" onchange="updProjCost('${proj.id}','${c.id}','label',this.value)" placeholder="e.g. Grant writer (subcontractor)"><span class="pcost-amt">$<input type="number" min="0" value="${c.amount||0}" onchange="updProjCost('${proj.id}','${c.id}','amount',this.value)"></span><button class="pcost-del" onclick="delProjCost('${proj.id}','${c.id}')" title="Remove">×</button></div>`).join("");
+  return `<div class="ws-section"><h3>Profitability</h3>
+    <div class="proj-fin-grid">
+      <div class="pf-tile"><div class="l">Revenue</div><div class="v">$<input type="number" min="0" value="${proj.revenue??""}" onchange="setProjRevenue('${proj.id}',this.value)" style="width:96px" placeholder="0"></div></div>
+      <div class="pf-tile"><div class="l">Direct costs</div><div class="v" style="color:#CB6E55">${money(cost)}</div></div>
+      <div class="pf-tile"><div class="l">Gross profit</div><div class="v" style="color:${gp>=0?"#3f7d5a":"#c1604a"}">${money(gp)}</div></div>
+      <div class="pf-tile"><div class="l">Margin</div><div class="v" style="color:${mgCol}">${mg==null?"—":mg+"%"}</div></div>
+    </div>
+    <div class="rsub" style="margin-top:8px">Direct costs — subcontractors, pass-throughs. Add your grant writer here and the margin updates live.</div>
+    <div class="pcost-list">${costRows}</div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addProjCost('${proj.id}')">+ Add cost</button>
+  </div>`;
+}
+function projectMarginsCard(){
+  const projs=(state.projects||[]).filter(p=>!p.archived&&(projRevenue(p)>0||projCostTotal(p)>0));
+  if(!projs.length)return "";
+  const rows=projs.map(p=>{ const rev=projRevenue(p), cost=projCostTotal(p), gp=rev-cost; return {p,rev,cost,gp,mg:rev?Math.round(gp/rev*100):null}; }).sort((a,b)=>(a.mg==null?999:a.mg)-(b.mg==null?999:b.mg));
+  const gcol="1.4fr 1fr 1fr 1fr 66px";
+  const body=rows.map(x=>`<div style="display:grid;grid-template-columns:${gcol};gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px;align-items:center"><span style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.p.name)}</span><span style="text-align:right;color:var(--ink2)">${money(x.rev)}</span><span style="text-align:right;color:#CB6E55">${money(x.cost)}</span><span style="text-align:right;font-weight:800;color:${x.gp>=0?"#3f7d5a":"#c1604a"}">${money(x.gp)}</span><span style="text-align:right;font-weight:800;color:${x.mg==null?"var(--muted)":(x.mg>=50?"#3f7d5a":x.mg>=25?"#D9A05B":"#c1604a")}">${x.mg==null?"—":x.mg+"%"}</span></div>`).join("");
+  const totRev=rows.reduce((s,x)=>s+x.rev,0), totCost=rows.reduce((s,x)=>s+x.cost,0); const totMg=totRev?Math.round((totRev-totCost)/totRev*100):null;
+  return `<div class="rep-card rep-full" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Project margins</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">${totMg!=null?totMg+"% blended":""}</span></div>
+    <div class="rsub">Which projects actually make money after direct costs like subcontractors. Set revenue &amp; costs on each project's Overview tab. Lowest margin first.</div>
+    <div style="display:grid;grid-template-columns:${gcol};gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:8px"><span>Project</span><span style="text-align:right">Revenue</span><span style="text-align:right">Costs</span><span style="text-align:right">Gross</span><span style="text-align:right">Margin</span></div>
+    ${body}
+  </div>`;
+}
 /* ===== AI CFO — feeds live financials to Claude for a CFO-style brief ===== */
 function aiCfoCard(){
   return `<div class="ai-panel" id="aiCfoCard" style="margin-bottom:16px">
@@ -5770,6 +5820,7 @@ async function aiFinanceBrief(){
     const goal=(typeof revGoalTarget==="function")?revGoalTarget():0;
     const monthly=(f.months||[]).filter(mo=>mo.income||mo.expenses).map(mo=>`${(mo.month||'').slice(0,3)}: inc ${money(mo.income)}, exp ${money(mo.expenses)}, net ${money(mo.netProfit)}`).join("; ");
     const subsLines=subsList().filter(s=>s.active!==false).map(s=>`${s.name||'?'} ${money(Math.round(subMonthly(s)))}/mo`).join(", ")||"none tracked";
+    const projLines=(state.projects||[]).filter(p=>!p.archived&&(projRevenue(p)>0||projCostTotal(p)>0)).map(p=>{const rev=projRevenue(p),c=projCostTotal(p);return `${p.name}: rev ${money(rev)}, cost ${money(c)}, margin ${rev?Math.round((rev-c)/rev*100):0}%`;}).join("; ")||"none set";
     const sys="You are a sharp, plain-spoken fractional CFO for a solo consultant. Be specific and numeric, referencing their real figures. Structure: a 2-3 sentence read of where they stand, then 4-6 prioritized, concrete recommendations as short bullets (start each with '- '). No preamble, no disclaimers, no generic advice.";
     const usr=`My live numbers for ${f.year||new Date().getFullYear()} year-to-date:
 Income ${money(f.income)}; Expenses ${money(f.expenses)}; Net profit ${money(net)} (${f.income?Math.round(net/f.income*100):0}% margin).
@@ -5777,6 +5828,7 @@ By month: ${monthly||'n/a'}.
 Bookings (contracts sold) ${money(r.booked)}; Recognized revenue YTD ${money(r.recognizedYTD)}; MRR ${money(r.mrr)}; ARR ${money(r.arr)}; Contracted rest of year ${money(r.backlogYear)}; Expected full-year ${money(r.expectedFullYear)}.
 Annual revenue goal ${money(goal)}.
 Recurring subscriptions ${money(subsMo)}/mo (${subsLines}).
+Project margins: ${projLines}.
 Taxes: reserving ${rate}% of net; should have set aside ${money(recommended)}, have reserved ${money(reserved)}.
 Context: last year I ran a deficit and didn't save for taxes, so I'm on an IRS payment plan. I need to grow ~20% per year to clear the debt and get into real profit.
 Give me the CFO brief and specific moves.`;
@@ -5841,6 +5893,7 @@ function renderFinance(m){
       ${months.map(mo=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">${esc((mo.month||"").slice(0,3))}</span><span style="text-align:right;color:var(--ink2)">${money(mo.income)}</span><span style="text-align:right;color:var(--ink2)">${money(mo.expenses)}</span><span style="text-align:right;font-weight:800;color:${mo.netProfit>=0?"#3f7d5a":"#c1604a"}">${money(mo.netProfit)}</span></div>`).join("")||'<div class="rsub">No monthly data.</div>'}
     </div>
   </div>
+  ${projectMarginsCard()}
   ${aiCfoCard()}
   ${subsCard()}
   ${taxCard()}`;
