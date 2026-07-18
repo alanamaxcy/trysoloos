@@ -41,18 +41,34 @@ export function parsePnl(rep) {
     ["expenses", /^total expenses$/i],
     ["net", /^net income$/i],
   ];
-  const walk = (rows) => {
+  // Also collect leaf account rows per section (income / cogs / expenses) so the
+  // app can show a real category breakdown with monthly trends.
+  const cats = { income: [], cogs: [], expenses: [] };
+  const walk = (rows, section) => {
     if (!rows) return;
     const arr = Array.isArray(rows.Row) ? rows.Row : Array.isArray(rows) ? rows : [];
     arr.forEach((row) => {
       const sum = row.Summary && row.Summary.ColData;
-      const label = (sum && sum[0] && sum[0].value) ||
-        (row.Header && row.Header.ColData && row.Header.ColData[0] && row.Header.ColData[0].value) || "";
+      const hdr = row.Header && row.Header.ColData && row.Header.ColData[0] && row.Header.ColData[0].value;
+      const label = (sum && sum[0] && sum[0].value) || hdr || "";
       if (sum) want.forEach(([k, re]) => { if (re.test((label || "").trim()) && !found[k]) found[k] = sum; });
-      if (row.Rows) walk(row.Rows);
+      let sec = section;
+      if (hdr) {
+        const h = String(hdr).trim().toLowerCase();
+        if (h === "income") sec = "income"; else if (h === "cost of goods sold") sec = "cogs"; else if (h === "expenses") sec = "expenses";
+      }
+      if (sec && row.ColData && Array.isArray(row.ColData)) {
+        const name = row.ColData[0] && row.ColData[0].value;
+        if (name) {
+          const total = num(row.ColData[totalIdx] && row.ColData[totalIdx].value);
+          const ms = monthCols.map((mc) => Math.round(num(row.ColData[mc.idx] && row.ColData[mc.idx].value)));
+          if (total || ms.some((v) => v)) cats[sec].push({ name: String(name).slice(0, 50), total: Math.round(total), months: ms });
+        }
+      }
+      if (row.Rows) walk(row.Rows, sec);
     });
   };
-  walk(rep && rep.Rows);
+  walk(rep && rep.Rows, null);
   const at = (k, idx) => (found[k] && found[k][idx] && found[k][idx].value != null) ? num(found[k][idx].value) : 0;
   const totIncome = at("income", totalIdx), totCogs = at("cogs", totalIdx), totExp = at("expenses", totalIdx);
   const totNet = found.net ? at("net", totalIdx) : (totIncome - totCogs - totExp);
@@ -68,7 +84,59 @@ export function parsePnl(rep) {
     expenses: Math.round(totCogs + totExp),
     netProfit: Math.round(totNet),
     months,
+    incomeCats: cats.income.sort((a, b) => b.total - a.total).slice(0, 8),
+    expenseCats: cats.cogs.concat(cats.expenses).sort((a, b) => b.total - a.total).slice(0, 12),
   };
+}
+
+// Pure parser for the AgedReceivableSummary report: who owes you money, by
+// aging bucket. Exported for testing.
+export function parseAging(rep) {
+  const num = (v) => { const n = parseFloat(String(v == null ? "" : v).replace(/,/g, "")); return isNaN(n) ? 0 : n; };
+  const cols = (rep && rep.Columns && rep.Columns.Column) || [];
+  const idx = {};
+  cols.forEach((c, i) => {
+    const t = String(c.ColTitle || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (t === "current") idx.current = i;
+    else if (/^1\s*-\s*30/.test(t)) idx.d30 = i;
+    else if (/^31\s*-\s*60/.test(t)) idx.d60 = i;
+    else if (/^61\s*-\s*90/.test(t)) idx.d90 = i;
+    else if (/91|over/.test(t)) idx.d90p = i;
+    else if (t === "total") idx.total = i;
+  });
+  const customers = [];
+  const walk = (rows) => {
+    if (!rows) return;
+    const arr = Array.isArray(rows.Row) ? rows.Row : Array.isArray(rows) ? rows : [];
+    arr.forEach((r) => {
+      if (r.ColData && Array.isArray(r.ColData)) {
+        const name = r.ColData[0] && r.ColData[0].value;
+        const total = num(idx.total != null && r.ColData[idx.total] && r.ColData[idx.total].value);
+        if (name && total) {
+          const cur = num(idx.current != null && r.ColData[idx.current] && r.ColData[idx.current].value);
+          customers.push({ name: String(name).slice(0, 50), total: Math.round(total), overdue: Math.round(total - cur) });
+        }
+      }
+      if (r.Rows) walk(r.Rows);
+    });
+  };
+  walk(rep && rep.Rows);
+  const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90p: 0 };
+  // Recompute buckets by re-walking (customer rows carry the per-bucket columns)
+  const walk2 = (rows) => {
+    if (!rows) return;
+    const arr = Array.isArray(rows.Row) ? rows.Row : Array.isArray(rows) ? rows : [];
+    arr.forEach((r) => {
+      if (r.ColData && Array.isArray(r.ColData) && r.ColData[0] && r.ColData[0].value && idx.total != null && num(r.ColData[idx.total] && r.ColData[idx.total].value)) {
+        ["current", "d30", "d60", "d90", "d90p"].forEach((k) => { if (idx[k] != null) buckets[k] += num(r.ColData[idx[k]] && r.ColData[idx[k]].value); });
+      }
+      if (r.Rows) walk2(r.Rows);
+    });
+  };
+  walk2(rep && rep.Rows);
+  Object.keys(buckets).forEach((k) => buckets[k] = Math.round(buckets[k]));
+  const total = Math.round(customers.reduce((s, c) => s + c.total, 0));
+  return { total, buckets, customers: customers.sort((a, b) => b.total - a.total).slice(0, 10) };
 }
 
 export default async (req) => {
@@ -95,7 +163,15 @@ export default async (req) => {
     }
     const rep = await r.json();
     const fin = parsePnl(rep);
-    return json({ ...fin, year, source: "QuickBooks Profit & Loss", intuit_tid: tid });
+    // Also pull receivables aging (who owes you money). Non-fatal if unavailable.
+    let ar = null;
+    try {
+      const ra = await fetch(base + "/v3/company/" + tok.realmId + "/reports/AgedReceivableSummary?minorversion=70",
+        { headers: { authorization: "Bearer " + tok.access_token, accept: "application/json" } });
+      if (ra.ok) ar = parseAging(await ra.json());
+      else console.error("[qbo] AR report failed", { status: ra.status, intuit_tid: ra.headers.get("intuit_tid") || "" });
+    } catch (e) { console.error("[qbo] AR fetch error", { error: String(e) }); }
+    return json({ ...fin, ar, year, source: "QuickBooks Profit & Loss", intuit_tid: tid });
   } catch (e) {
     console.error("[qbo] revenue sync error", { error: String(e) });
     return json({ error: String(e) });
