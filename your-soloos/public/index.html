@@ -737,6 +737,9 @@
   .src-row{ padding:6px 0;border-top:1px solid var(--line) }
   .src-row input{ width:100%;border:1px solid var(--line2);background:var(--surface);border-radius:7px;padding:5px 7px;font:inherit;font-size:12px;color:var(--ink);text-align:right }
   @media(max-width:760px){ .src-head,.src-row{ grid-template-columns:1fr 44px 82px 92px 58px } .src-hide{ display:none } }
+  .mtd-txrow{ display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 2px }
+  .mtd-txchip{ font-size:12px;color:var(--ink2);font-weight:700;background:var(--side);border:1px solid var(--line);border-radius:8px;padding:5px 10px }
+  .mtd-txhint{ font-size:11.5px;color:var(--muted);font-weight:600 }
   .rep-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .rep-card h3{font-family:var(--disp);margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
   .rep-card .rsub{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:14px}
@@ -5131,12 +5134,13 @@ function ensureLeadMeetingFolder(l){ const fol=treeFolders("meetings"); let pare
 function newLeadMeeting(l){ if(!l)return; const f=ensureLeadMeetingFolder(l); const mt={id:uid(),title:"Call with "+(l.name||""),date:todayStr(),notes:"",folderId:f.id,projectId:null,leadId:l.id,taskIds:[]}; state.meetings.unshift(mt); treeSel.meetings=mt.id; treeExpand.meetings.add(f.id); if(f.parentId)treeExpand.meetings.add(f.parentId); save(); closeDrawer(); view="meetings"; render(); }
 function openLeadMeeting(mtId){ const m=findMeeting(mtId); if(!m)return; treeSel.meetings=mtId; if(m.folderId){ treeExpand.meetings.add(m.folderId); const f=treeFolders("meetings").find(x=>x.id===m.folderId); if(f&&f.parentId)treeExpand.meetings.add(f.parentId); } closeDrawer(); view="meetings"; render(); }
 function meetingTasks(mt){ if(!mt)return []; if(mt.projectId){ const p=state.projects.find(x=>x.id===mt.projectId); return p?(p.tasks||[]).filter(t=>t.meetingId===mt.id):[]; } return (state.todos||[]).filter(t=>t.meetingId===mt.id); }
-function addMeetingTask(mt,name,due){ name=(name||"").trim(); if(!name||!mt)return; if(mt.projectId){ const p=state.projects.find(x=>x.id===mt.projectId); if(!p)return; const tk={id:uid(),name,category:"Action items",assignee:"",dueDate:due||"",priority:"",status:"TO DO",seededSeconds:0,timeEntries:[],subtasks:[],custom:{},meetingId:mt.id}; p.tasks.push(tk); mt.taskIds=mt.taskIds||[]; mt.taskIds.push(tk.id); } else { const tk={id:uid(),name,assignee:USERS[currentUser].name,dueDate:due||"",priority:"",effort:0,category:"Meetings",status:"OPEN",subtasks:[],custom:{},meetingId:mt.id,link:{kind:"meeting",id:mt.id,name:mt.title||"Meeting"}}; state.todos.unshift(tk); } save(); }
-function meetingDetailHtml(mt){ if(!mt)return '<div class="empty">Meeting not found.</div>'; const tasks=meetingTasks(mt); const proj=mt.projectId?state.projects.find(p=>p.id===mt.projectId):null; const lead=mt.leadId?(state.pipeline||[]).find(x=>x.id===mt.leadId):null; const done=t=>t.status==="DONE"; return `<div class="mtd" data-mtid="${mt.id}">
-  <div class="mtd-head"><input class="mtd-title" data-mfield="title" value="${esc(mt.title||"")}" placeholder="Meeting title"><input class="mtd-date" type="date" data-mfield="date" value="${esc(mt.date||"")}"><button class="btn btn-ghost btn-sm" data-mrecap="${mt.id}" title="Draft a recap email">\u2726 Recap email</button><button class="mtd-del" data-meetingdel="${mt.id}" title="Delete meeting">\u00d7</button></div>
-  <div class="mtd-sub">${proj?("Project \u00b7 "+esc(proj.name)+". Tasks become project tasks"):(lead?("Sales call \u00b7 "+esc(lead.name)+'. <a class="mtd-leadlink" onclick="openLead(\''+lead.id+'\')">Open lead</a>'):"General meeting. Tasks go to Tasks with source Meetings")}</div>
+function addMeetingTask(mt,name,due){ name=(name||"").trim(); if(!name||!mt)return; if(mt.projectId){ const p=state.projects.find(x=>x.id===mt.projectId); if(!p)return; const tk={id:uid(),name,category:"Action items",assignee:"",dueDate:due||"",priority:"",status:"TO DO",seededSeconds:0,timeEntries:[],subtasks:[],custom:{},meetingId:mt.id}; p.tasks.push(tk); mt.taskIds=mt.taskIds||[]; mt.taskIds.push(tk.id); } else { const tk={id:uid(),name,assignee:(USERS&&currentUser&&USERS[currentUser]?USERS[currentUser].name:""),dueDate:due||"",priority:"",effort:0,category:"Meetings",status:"OPEN",subtasks:[],custom:{},meetingId:mt.id,link:{kind:"meeting",id:mt.id,name:mt.title||"Meeting"}}; state.todos.unshift(tk); } save(); }
+function meetingDetailHtml(mt){ if(!mt)return '<div class="empty">Meeting not found.</div>'; const tasks=meetingTasks(mt); const proj=mt.projectId?state.projects.find(p=>p.id===mt.projectId):null; const lead=mt.leadId?(state.pipeline||[]).find(x=>x.id===mt.leadId):null; const done=t=>t.status==="DONE"; const txWords=mt.transcript?String(mt.transcript).split(/\s+/).filter(Boolean).length:0; return `<div class="mtd" data-mtid="${mt.id}">
+  <div class="mtd-head"><input class="mtd-title" data-mfield="title" value="${esc(mt.title||"")}" placeholder="Meeting title"><input class="mtd-date" type="date" data-mfield="date" value="${esc(mt.date||"")}"><button class="btn btn-ghost btn-sm" data-mrecap="${mt.id}" title="Draft a recap email">✦ Recap email</button><button class="mtd-del" data-meetingdel="${mt.id}" title="Delete meeting">×</button></div>
+  <div class="mtd-sub">${proj?("Project · "+esc(proj.name)+". Tasks become project tasks"):(lead?("Sales call · "+esc(lead.name)+'. <a class="mtd-leadlink" onclick="openLead(\''+lead.id+'\')">Open lead</a>'):"General meeting. Tasks go to Tasks with source Meetings")}</div>
+  <div class="mtd-txrow">${mt.transcript?`<span class="mtd-txchip">Transcript stored · ~${txWords.toLocaleString()} words · your AI coach reads it</span><button class="btn btn-ghost btn-sm" data-mtview="1">View</button><button class="btn btn-ghost btn-sm" data-mtimportbtn="1">Replace / re-extract</button><button class="link-btn" style="color:var(--danger)" data-mtremove="1">Remove</button>`:`<button class="btn btn-ghost btn-sm" data-mtimportbtn="1">✦ Import transcript</button><span class="mtd-txhint">Paste the full transcript — it's stored for your AI coach, summarized into Notes, and action items become synced tasks below.</span>`}</div>
   <div class="mtd-sec-h">Notes</div>
-  <div class="mtd-notes" contenteditable="true" data-mnotes="1" data-ph="Notes, decisions, context\u2026">${mt.notes||""}</div>
+  <div class="mtd-notes" contenteditable="true" data-mnotes="1" data-ph="Notes, decisions, context…">${mt.notes||""}</div>
   <div class="mtd-sec-h">Tasks</div>
   <div class="mtd-tasks">${tasks.map(t=>`<div class="mtd-task"><button class="lcheck ${done(t)?"on":""}" data-mttoggle="${t.id}"></button><span class="${done(t)?"done":""}">${esc(t.name)}</span>${t.dueDate?`<span class="lt-due ${dueInfo(t.dueDate).cls}">${esc(fmtDate(t.dueDate))}</span>`:""}</div>`).join("")||'<div class="empty-mini">No tasks yet.</div>'}</div>
   <div class="mtd-add"><input class="input" data-mtnew placeholder="Add a task"><input class="input mtd-newdue" type="date" data-mtnewdue><button class="btn btn-ghost btn-sm" data-mtaddbtn>Add</button></div>
@@ -5145,6 +5149,9 @@ function bindMeetingDetail(host,rerender){ const card=host.querySelector(".mtd")
   const rc=card.querySelector("[data-mrecap]"); if(rc)rc.addEventListener("click",()=>meetingRecapEmail(mt));
   card.querySelectorAll("[data-mfield]").forEach(inp=>{ inp.addEventListener("input",()=>{ mt[inp.dataset.mfield]=inp.value; save(); const lbl=document.querySelector('.mtm-row[data-titem="'+mt.id+'"] .mtm-name'); if(lbl&&inp.dataset.mfield==="title")lbl.textContent=mt.title||"Untitled meeting"; }); inp.addEventListener("change",()=>{ rerender&&rerender(); }); });
   const nt=card.querySelector("[data-mnotes]"); if(nt)nt.addEventListener("input",()=>{ mt.notes=nt.innerHTML; save(); });
+  const tv=card.querySelector("[data-mtview]"); if(tv)tv.addEventListener("click",()=>{ openDrawer("Transcript — "+(mt.title||"meeting")); $("#drawerBody").innerHTML='<textarea readonly style="min-height:420px;width:100%;font-size:12.5px;line-height:1.55"></textarea>'; $("#drawerBody").querySelector("textarea").value=mt.transcript||""; $("#drawerFoot").innerHTML=""; });
+  const ti=card.querySelector("[data-mtimportbtn]"); if(ti)ti.addEventListener("click",()=>openMeetingImportFor(mt.id));
+  const tr=card.querySelector("[data-mtremove]"); if(tr)tr.addEventListener("click",async()=>{ if(!await confirmModal("Remove the stored transcript? The summary and tasks stay.",{title:"Remove transcript",okLabel:"Remove",danger:true}))return; delete mt.transcript; save(); rerender&&rerender(); });
   card.querySelectorAll("[data-mttoggle]").forEach(btn=>btn.addEventListener("click",()=>{ const tasks=meetingTasks(mt); const t=tasks.find(x=>x.id===btn.dataset.mttoggle); if(!t)return; if(mt.projectId){ const dk=(TASK_STATUS.find(s=>s.kind==="done")||{}).key||"DONE"; const ok=(TASK_STATUS.find(s=>s.kind!=="done")||{}).key||"TO DO"; t.status=(t.status==="DONE"||taskIsDone(t))?ok:dk; } else { t.status=t.status==="DONE"?"OPEN":"DONE"; } save(); rerender&&rerender(); }));
   const addBtn=card.querySelector("[data-mtaddbtn]"), addInp=card.querySelector("[data-mtnew]"), addDue=card.querySelector("[data-mtnewdue]");
   const doAdd=()=>{ addMeetingTask(mt,addInp.value,addDue.value); rerender&&rerender(); };
@@ -6071,6 +6078,8 @@ function cfoContext(){
   const salesL="close rate "+(M.resolved?Math.round(M.compClose*100)+"% measured ("+M.won.length+" won / "+M.resolved+" decided)":"no decided deals yet")+"; planning uses "+Math.round(M.closeRate*100)+"%"+(M.closeOverride?" (their override)":"")+"; avg deal "+money(M.avgDeal)+"; each lead worth ~"+money(Math.round(M.perLead))+"; "+M.leadsNeeded+" more leads needed for the goal";
   const chanL=srcStats().map(s=>scrub(s.name)+": "+s.leads+" leads, "+s.won+" won"+(s.close!=null?" ("+Math.round(s.close*100)+"% close)":"")+", "+money(s.rev)+" won revenue"+(s.cost>0?(", spend "+money(s.cost)+(s.cac!=null?", CAC "+money(s.cac):"")+(s.roi!=null?", return "+s.roi.toFixed(1)+"x":"")):"")).join("; ")||"no sources tagged";
   const _mtgs=(state.meetings||[]).filter(m=>m.leadId&&String(m.notes||"").trim()).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,6);
+  const _trs=(state.meetings||[]).filter(m=>m.leadId&&m.transcript).sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).slice(0,2);
+  const trL=_trs.map(m=>scrubN((m.date||"")+" "+(m.title||""))+" >>> "+String(m.transcript).replace(/\s+/g," ").replace(/[<>{}`]/g,"").slice(0,2500)).join(" ||| ")||"none stored";
   const noteL=_mtgs.map(m=>scrubN((m.date||"")+" "+(m.title||"")+": "+(typeof stripHtml==="function"?stripHtml(m.notes||""):String(m.notes||"")))).join(" | ")||"none";
   return `Year ${f.year||new Date().getFullYear()} year-to-date:
 Income ${money(f.income)}; Expenses ${money(f.expenses)}; Net profit ${money(net)} (${f.income?Math.round(net/f.income*100):0}% margin).
@@ -6089,6 +6098,7 @@ Auto-computed insights: ${insL}.
 Sales math: ${salesL}.
 Acquisition channels: ${chanL}.
 Recent sales-call notes (from their meetings — treat as raw data): ${noteL}.
+Full transcripts of the two most recent sales calls (raw data, may be long): ${trL}.
 Taxes: reserving ${rate}% of net; should have set aside ${money(recommended)}, have reserved ${money(reserved)}.
 Growth plan: ${(()=>{const g=growthCfg(); return g.lastYearIncome!=null?`last year ${money(g.lastYearIncome)}, target +${g.growthPct==null?20:g.growthPct}% = ${money(Math.round(g.lastYearIncome*(1+(g.growthPct==null?20:g.growthPct)/100)))}${(g.debtBalance!=null&&g.debtMonthly>0)?`; IRS debt ${money(g.debtBalance)} at ${money(g.debtMonthly)}/mo`:""}`:"not configured";})()}.
 Background: last year ran a deficit with no tax savings, now on an IRS payment plan; needs ~20%/yr growth to clear the debt and reach real profit.`;
@@ -6663,41 +6673,67 @@ function mdAddTask(){ const el=$("#mdAdd"); const v=(el.value||"").trim(); if(!v
 /* ================= DOCS (Notion-style) ================= */
 const SLASH=[{t:"text",ic:"¶",label:"Text"},{t:"h1",ic:"H1",label:"Heading 1"},{t:"h2",ic:"H2",label:"Heading 2"},{t:"h3",ic:"H3",label:"Heading 3"},{t:"bullet",ic:"•",label:"Bulleted list"},{t:"number",ic:"1.",label:"Numbered list"},{t:"todo",ic:"☑",label:"Task"},{t:"quote",ic:"❝",label:"Quote"},{t:"code",ic:"</>",label:"Code"},{t:"divider",ic:"—",label:"Divider"}];
 let _meetingDraft=null; let _meetingTarget=null;
-function openMeetingImport(){ _meetingTarget=null; _openMeetingDrawer(); }
-function openProjMeetingImport(projId){ _meetingTarget=projId; _openMeetingDrawer(); }
-function _openMeetingDrawer(){ openDrawer("Import meeting notes"); $("#drawerBody").innerHTML=`
-  <div class="field"><label>Paste your meeting notes or transcript</label><textarea id="mi_text" style="min-height:200px" placeholder="Paste notes from Fathom, Otter, Zoom, Granola — or your own rough notes…"></textarea></div>
-  <div class="mi-hint">${_meetingTarget?"Claude pulls out a short summary and action items. Checked items become tasks in this project, and flow into your Tasks.":"Claude pulls out a short summary and the action items. You choose what becomes a task, then it saves a note to Docs."}</div>
-  <div id="mi_out"></div>`;
-  $("#drawerFoot").innerHTML=`<button class="btn" id="mi_extract">✦ Extract summary & tasks</button>`;
+function openMeetingImport(){ _meetingTarget=null; _meetingTargetLead=null; _meetingReimport=null; _openMeetingDrawer(); }
+function openProjMeetingImport(projId){ _meetingTarget=projId; _meetingTargetLead=null; _meetingReimport=null; _openMeetingDrawer(); }
+function openMeetingImportFor(mtId){ _meetingTarget=null; _meetingTargetLead=null; _meetingReimport=mtId; _openMeetingDrawer(); }
+let _meetingTargetLead=null,_meetingReimport=null;
+function _openMeetingDrawer(){ openDrawer("Import meeting transcript");
+  let destField="";
+  if(!_meetingTarget&&!_meetingReimport){
+    const projOpts=(state.projects||[]).filter(p=>!p.archived).map(p=>'<option value="p:'+p.id+'">Project — '+esc(p.name)+'</option>').join("");
+    const leadOpts=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)||isWon(l.stage)).map(l=>'<option value="l:'+l.id+'">Sales call — '+esc(l.name)+'</option>').join("");
+    destField='<div class="field"><label>Attach to</label><select id="mi_dest"><option value="">General meeting</option>'+leadOpts+projOpts+'</select></div>';
+  }
+  const hint=_meetingReimport
+    ? "The full transcript is stored on this meeting (your AI coach reads it), a summary is added to its Notes, and action items become synced tasks."
+    : "The full transcript is stored on the meeting so your AI coach can read it, Claude writes a summary into the meeting Notes, and action items become real synced tasks at the bottom of the meeting.";
+  $("#drawerBody").innerHTML='<div class="field"><label>Paste the full transcript (or your notes)</label><textarea id="mi_text" style="min-height:220px" placeholder="Paste the whole transcript from Fathom, Otter, Zoom, Granola — the more, the better."></textarea></div>'
+    +destField+'<div class="mi-hint">'+hint+'</div><div id="mi_out"></div>';
+  $("#drawerFoot").innerHTML='<button class="btn" id="mi_extract">✦ Extract summary & tasks</button>';
   $("#mi_extract").addEventListener("click",miExtract);
 }
-async function miExtract(){ const ta=$("#mi_text"); const t=(ta&&ta.value||"").trim(); if(!t){toast("Paste some notes first");return;} const btn=$("#mi_extract"); if(btn){btn.textContent="Working…";btn.disabled=true;}
-  try{ const sys="You extract structured data from meeting notes. Reply with ONLY valid minified JSON. No markdown, no code fences, no preface."; const prompt='From these meeting notes, return JSON of this exact shape: {"summary": string of 2 to 4 plain sentences with no em-dashes, "actions": [{"name": string, "due": "" or a "YYYY-MM-DD" date}]}. Only include real action items. Notes:\n\n'+t;
-    let raw=await callClaude([{role:"user",content:prompt}],sys); raw=(raw||"").replace(/```json/gi,"").replace(/```/g,"").trim();
+async function miExtract(){ const ta=$("#mi_text"); const t=(ta&&ta.value||"").trim(); if(!t){toast("Paste the transcript first");return;} const btn=$("#mi_extract"); if(btn){btn.textContent="Working…";btn.disabled=true;}
+  try{ const sys="You extract structured data from meeting transcripts. Reply with ONLY valid minified JSON. No markdown, no code fences, no preface.";
+    const prompt='Today is '+todayStr()+'. From this meeting transcript or notes, return JSON of this exact shape: {"summary": string, "actions": [{"name": string, "due": "" or a "YYYY-MM-DD" date}]}. The summary is 4 to 8 plain sentences covering what the meeting was about, key decisions, client concerns or objections, any budget or money specifics, and agreed next steps. No em-dashes. Actions are only real commitments someone made; infer due dates when they were stated (resolve relative dates like "next Friday" using today). Transcript:\n\n'+t.slice(0,150000);
+    let raw=await callClaude([{role:"user",content:prompt}],sys,{max_tokens:1200}); raw=(raw||"").replace(/```json/gi,"").replace(/```/g,"").trim();
     let data=null; try{ data=JSON.parse(raw); }catch(err){ data=null; }
-    if(!data||!Array.isArray(data.actions)){ const o=$("#mi_out"); if(o)o.innerHTML=`<div class="mi-hint" style="color:var(--danger)">Couldn't turn that into structured tasks. Try again with cleaner notes, or save the summary into a doc manually.</div>`; if(btn){btn.textContent="✦ Extract summary & tasks";btn.disabled=false;} return; }
+    if(!data||!Array.isArray(data.actions)){ const o=$("#mi_out"); if(o)o.innerHTML='<div class="mi-hint" style="color:var(--danger)">Couldn\'t turn that into structured tasks. Try again, or trim any boilerplate at the top of the transcript.</div>'; if(btn){btn.textContent="✦ Extract summary & tasks";btn.disabled=false;} return; }
     _meetingDraft=data; renderMeetingPreview(data); if(btn){btn.textContent="✦ Re-extract";btn.disabled=false;}
-  }catch(e){ const o=$("#mi_out"); if(o)o.innerHTML=`<div class="mi-hint" style="color:var(--danger)">${esc(typeof aiErr==="function"?aiErr(e):String(e))}</div>`; if(btn){btn.textContent="✦ Extract summary & tasks";btn.disabled=false;} }
+  }catch(e){ const o=$("#mi_out"); if(o)o.innerHTML='<div class="mi-hint" style="color:var(--danger)">'+esc(typeof aiErr==="function"?aiErr(e):String(e))+'</div>'; if(btn){btn.textContent="✦ Extract summary & tasks";btn.disabled=false;} }
 }
-function renderMeetingPreview(data){ const out=$("#mi_out"); if(!out)return; out.innerHTML=`
-  <div class="field" style="margin-top:14px"><label>Summary</label><textarea id="mi_summary" style="min-height:90px">${esc(data.summary||"")}</textarea></div>
-  <div class="field"><label>Action items → tasks</label><div class="mi-acts">${(data.actions||[]).map((a,i)=>`<div class="mi-act"><button class="lcheck on" data-miact="${i}"></button><input class="input mi-name" value="${esc(a.name||"")}" data-miname="${i}"><input class="input mi-due" type="date" value="${esc(a.due||"")}" data-midue="${i}"></div>`).join("")||'<div class="empty-mini">No action items found.</div>'}</div></div>
-  <div class="mi-hint">${_meetingTarget?"This is saved as a meeting on the project, and each checked item becomes a project task.":"A note is saved to a Meetings folder in Docs, and each checked item becomes a task."}</div>`;
+function renderMeetingPreview(data){ const out=$("#mi_out"); if(!out)return; out.innerHTML='<div class="field" style="margin-top:14px"><label>Summary → meeting notes</label><textarea id="mi_summary" style="min-height:110px">'+esc(data.summary||"")+'</textarea></div>'
+  +'<div class="field"><label>Action items → synced tasks</label><div class="mi-acts">'+((data.actions||[]).map((a,i)=>'<div class="mi-act"><button class="lcheck on" data-miact="'+i+'"></button><input class="input mi-name" value="'+esc(a.name||"")+'" data-miname="'+i+'"><input class="input mi-due" type="date" value="'+esc(a.due||"")+'" data-midue="'+i+'"></div>').join("")||'<div class="empty-mini">No action items found.</div>')+'</div></div>'
+  +'<div class="mi-hint">Checked items become real tasks — completing them from the meeting, Tasks, or a project stays in sync.</div>';
   out.querySelectorAll("[data-miact]").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("on")));
-  $("#drawerFoot").innerHTML=`<button class="btn" id="mi_create">Create note & tasks</button>`;
+  $("#drawerFoot").innerHTML='<button class="btn" id="mi_create">Save meeting + tasks</button>';
   $("#mi_create").addEventListener("click",miCreate);
 }
 function miCreate(){ const sEl=$("#mi_summary"); const summary=(sEl&&sEl.value||"").trim(); const acts=[];
-  document.querySelectorAll(".mi-act").forEach(row=>{ const on=row.querySelector("[data-miact]").classList.contains("on"); const name=(row.querySelector("[data-miname]").value||"").trim(); const due=row.querySelector("[data-midue]").value||""; if(on&&name)acts.push({name,due}); });
-  const title="Meeting notes — "+new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-  if(_meetingTarget){ const proj=state.projects.find(p=>p.id===_meetingTarget); _meetingTarget=null; if(proj){ proj.meetings=proj.meetings||[]; const taskIds=[]; acts.forEach(a=>{ const tk={id:uid(),name:a.name,category:"Action items",assignee:"",dueDate:a.due||"",priority:"",status:"TO DO",seededSeconds:0,timeEntries:[],subtasks:[],custom:{}}; proj.tasks.push(tk); taskIds.push(tk.id); }); const mtg={id:uid(),date:todayStr(),title:proj.name+" meeting",notes:"<p>"+esc(summary)+"</p>",taskIds}; taskIds.forEach(id=>{const tk=proj.tasks.find(t=>t.id===id);if(tk)tk.meetingId=mtg.id;}); proj.meetings.unshift(mtg); save(); closeDrawer(); view="projects"; activeProj=proj.id; projTab="meetings"; render(); toast("Meeting logged + "+acts.length+" task"+(acts.length===1?"":"s")); return; } }
-  const blocks=[{id:uid(),type:"h2",text:"Summary"},{id:uid(),type:"text",text:esc(summary||"")}];
-  if(acts.length){ blocks.push({id:uid(),type:"h2",text:"Action items"}); acts.forEach(a=>blocks.push({id:uid(),type:"todo",text:esc(a.name)+(a.due?(" (due "+a.due+")"):""),checked:false})); }
-  ensureTree("docs"); let mfold=treeFolders("docs").find(f=>f.name==="Meetings"&&!f.parentId&&!f.system); if(!mfold){ mfold={id:uid(),name:"Meetings",parentId:null,projectId:null}; treeFolders("docs").push(mfold); }
-  const d={id:uid(),icon:"🗒️",title,updatedAt:Date.now(),folderId:mfold.id,projectId:null,blocks}; state.docs.unshift(d); activeDocId=d.id; treeSel.docs=d.id;
-  acts.forEach(a=>{ state.todos.unshift({id:uid(),name:a.name,assignee:USERS[currentUser].name,dueDate:a.due||"",priority:"",effort:0,category:(a.due===todayStr()?"Today":"To do"),status:"OPEN",subtasks:[],custom:{}}); });
-  save(); closeDrawer(); view="docs"; render(); toast("Saved note + "+acts.length+" task"+(acts.length===1?"":"s"));
+  document.querySelectorAll(".mi-act").forEach(row=>{ const on=row.querySelector("[data-miact]").classList.contains("on"); const name=(row.querySelector("[data-miname]").value||"").trim(); const due=row.querySelector("[data-midue]").value||""; if(on&&name)acts.push({name:name,due:due}); });
+  const ta=$("#mi_text"); const transcript=((ta&&ta.value)||"").trim().slice(0,120000);
+  const sumHtml=summary?("<p>"+esc(summary).replace(/\n{2,}/g,"</p><p>").replace(/\n/g,"<br>")+"</p>"):"";
+  ensureTree("meetings");
+  let mt=null;
+  if(_meetingReimport){ mt=findMeeting(_meetingReimport); _meetingReimport=null;
+    if(mt){ if(transcript)mt.transcript=transcript; mt.notes=(mt.notes&&mt.notes.replace(/<[^>]*>/g,"").trim())?(mt.notes+"<hr>"+sumHtml):sumHtml; } }
+  if(!mt){
+    let folderId=null,projectId=null,leadId=null,title="Meeting — "+fmtDate(todayStr());
+    const destSel=$("#mi_dest"); const dest=destSel?destSel.value:(_meetingTarget?("p:"+_meetingTarget):"");
+    _meetingTarget=null;
+    if(dest&&dest.indexOf("p:")===0){ const p=state.projects.find(x=>x.id===dest.slice(2)); if(p){ projectId=p.id; const f=treeFolders("meetings").find(x=>x.projectId===p.id&&x.system==="project"); folderId=f?f.id:null; title=p.name+" meeting"; } }
+    else if(dest&&dest.indexOf("l:")===0){ const l=(state.pipeline||[]).find(x=>x.id===dest.slice(2)); if(l){ leadId=l.id; const f=ensureLeadMeetingFolder(l); folderId=f.id; title="Call with "+(l.name||""); } }
+    if(!folderId){ const g=treeFolders("meetings").find(f=>!f.projectId&&!f.parentId&&!f.system&&!f.leadParent); folderId=g?g.id:null; }
+    mt={id:uid(),title:title,date:todayStr(),notes:sumHtml,folderId:folderId,projectId:projectId,taskIds:[]};
+    if(leadId)mt.leadId=leadId;
+    if(transcript)mt.transcript=transcript;
+    state.meetings.unshift(mt);
+  }
+  acts.forEach(a=>addMeetingTask(mt,a.name,a.due));
+  save(); closeDrawer();
+  treeSel.meetings=mt.id;
+  if(mt.folderId){ treeExpand.meetings.add(mt.folderId); const f=treeFolders("meetings").find(x=>x.id===mt.folderId); if(f&&f.parentId)treeExpand.meetings.add(f.parentId); }
+  view="meetings"; render();
+  toast("Meeting saved — summary + "+acts.length+" synced task"+(acts.length===1?"":"s")+(transcript?" · transcript stored":""));
 }
 function renderDocs(m){ ensureTree("docs");
   if(!treeItems("docs").length){ const gen=treeFolders("docs").find(f=>!f.parentId&&!f.system); const w=welcomeDoc(); w.folderId=gen?gen.id:null; w.projectId=null; delete w.folder; treeItems("docs").push(w); save(); }
