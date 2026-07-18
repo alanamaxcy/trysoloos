@@ -3016,7 +3016,7 @@ function openLead(id){
     <div class="field"><label>Company name</label><input id="f_name" value="${esc(l.name)}"></div>
     <div class="field"><label>Stage</label><select id="f_stage">${STAGES.map(s=>`<option value="${s.key}" ${l.stage===s.key?"selected":""}>${s.label}</option>`).join("")}</select></div>
     <div class="field-row"><div class="field"><label>Contract value ($)</label><input id="f_cv" type="number" value="${l.contractValue??""}"></div><div class="field"><label>Annual value ($)</label><input id="f_av" type="number" value="${l.annualValue??""}"></div></div>
-    <div class="field-row"><div class="field"><label>Billing</label><select id="f_recur"><option value="recurring" ${l.recurring!==false?"selected":""}>Recurring / retainer</option><option value="onetime" ${l.recurring===false?"selected":""}>One-time / fixed term</option></select></div><div class="field"><label>Monthly ($)</label><input id="f_monthly" type="number" value="${l.monthly??""}" placeholder="${l.contractValue?Math.round(l.contractValue/((l.termMonths>0)?l.termMonths:12)):"auto"}"></div></div>
+    <div class="field-row"><div class="field"><label>Billing</label><select id="f_recur"><option value="recurring" ${dealBilling(l)==="recurring"?"selected":""}>Recurring / retainer</option><option value="paidfull" ${dealBilling(l)==="paidfull"?"selected":""}>Paid in full</option><option value="installments" ${dealBilling(l)==="installments"?"selected":""}>Installments / project</option></select></div><div class="field"><label>Monthly ($)</label><input id="f_monthly" type="number" value="${l.monthly??""}" placeholder="${l.contractValue?Math.round(l.contractValue/((l.termMonths>0)?l.termMonths:12)):"auto"}"></div></div>
     <div class="field-row"><div class="field"><label>Term (months)</label><input id="f_term" type="number" value="${l.termMonths??""}" placeholder="12"></div><div class="field"><label>Start date</label><input id="f_start" type="date" value="${esc(l.startDate||"")}"></div></div>
     <div class="lt-hint" style="margin:-6px 0 2px">Contract value is what you <b>sold</b>. Monthly × start date is what you <b>collect</b> — used to reconcile bookings vs revenue on the Finance page.</div>
     <div class="field-row"><div class="field"><label>Budget tier</label><select id="f_tier"><option value="">—</option>${TIERS.map(t=>`<option ${l.budgetTier===t?"selected":""}>${t}</option>`).join("")}</select></div><div class="field"><label>Owner</label><input id="f_owner" value="${esc(l.owner||"")}"></div></div>
@@ -3044,7 +3044,7 @@ function openLead(id){
   { const ap=b.querySelector("#f_addppl"); if(ap)ap.addEventListener("click",()=>{ const np={id:uid(),name:"New person",role:"",email:"",phone:"",company:l.name||"",category:"",kind:"contact",leadId:l.id,isPrimary:false,invitedToNetwork:false,priority:null,notes:""}; (state.people=state.people||[]).push(np); save(); openPerson(np.id); }); b.querySelectorAll("[data-lp]").forEach(r=>r.addEventListener("click",()=>openPerson(r.dataset.lp))); }
   bNum(b,"#f_cv",l,"contractValue"); bNum(b,"#f_av",l,"annualValue"); bDate(b,"#f_last",l,"lastContact"); bDate(b,"#f_follow",l,"nextFollowUp");
   bNum(b,"#f_monthly",l,"monthly"); bNum(b,"#f_term",l,"termMonths"); bDate(b,"#f_start",l,"startDate");
-  { const rc=b.querySelector("#f_recur"); if(rc)rc.addEventListener("change",()=>{ l.recurring=(rc.value==="recurring"); save(); }); }
+  { const rc=b.querySelector("#f_recur"); if(rc)rc.addEventListener("change",()=>{ l.billing=rc.value; l.recurring=(rc.value==="recurring"); save(); }); }
   { const fl=b.querySelector("#f_last"); if(fl)fl.addEventListener("change",()=>{ if(fl.value)logContact(l,fl.value); }); }
   { const ff=b.querySelector("#f_follow"); if(ff){ let _pf=l.nextFollowUp||""; ff.addEventListener("change",()=>{ const nv=ff.value||""; if(nv&&nv!==_pf){ l.activity=l.activity||[]; l.activity.push({id:uid(),date:todayStr(),text:"Follow-up scheduled for "+fmtDate(nv),auto:true}); save(); } _pf=nv; }); } }
   $("#f_stage").addEventListener("change",e=>{l.stage=e.target.value;save();});
@@ -5892,7 +5892,7 @@ function setFinanceTab(t){ _financeTab=t; renderFinance($("#main")); }
    Edits write to the same pipeline lead fields as the deal drawer (recurring,
    monthly, termMonths, startDate), so Pipeline stays the single source of truth. */
 function updContract(id,field,val){ const l=(state.pipeline||[]).find(x=>x.id===id); if(!l)return;
-  if(field==="recurring"){ l.recurring=(val==="recurring"); }
+  if(field==="billing"){ l.billing=val; l.recurring=(val==="recurring"); }
   else if(field==="startDate"){ l.startDate=val||""; }
   else { const n=String(val).replace(/[^0-9.]/g,""); l[field]=(n===""?null:+n); if(field==="contractValue")l.annualValue=l.contractValue; }
   save(); if(view==="finance")renderFinance($("#main")); }
@@ -5901,23 +5901,23 @@ function finContractsHtml(){
   const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
   const r=contractRecon();
   const box=(l,v,s,col)=>`<div class="box"><div class="l">${l}</div><div class="v" style="${col?`color:${col}`:""}">${v}</div><div class="s">${s||""}</div></div>`;
-  const rows=won.map(l=>{ const auto=Math.round((l.contractValue||0)/((l.termMonths>0)?l.termMonths:12)); const rr=dealRevenueYear(l,y,cm);
+  const rows=won.map(l=>{ const auto=Math.round((l.contractValue||0)/((l.termMonths>0)?l.termMonths:12)); const rr=dealRevenueYear(l,y,cm); const bill=dealBilling(l);
     return `<div class="ct-row">
       <span class="nm" title="${esc(l.name)}">${esc(l.name)}</span>
       <input type="number" min="0" value="${l.contractValue??""}" onchange="updContract('${l.id}','contractValue',this.value)" title="Total contract value ($)">
-      <select onchange="updContract('${l.id}','recurring',this.value)"><option value="recurring" ${l.recurring!==false?"selected":""}>Recurring</option><option value="onetime" ${l.recurring===false?"selected":""}>One-time</option></select>
-      <input type="number" min="0" value="${l.monthly??""}" placeholder="${auto||"auto"}" onchange="updContract('${l.id}','monthly',this.value)" title="Monthly amount — leave blank to use contract ÷ term">
-      <input type="number" min="1" value="${l.termMonths??""}" placeholder="12" onchange="updContract('${l.id}','termMonths',this.value)" title="Term (months)">
-      <input type="date" value="${esc(l.startDate||"")}" onchange="updContract('${l.id}','startDate',this.value)" title="Start date">
-      <span class="calc">${money(Math.round(dealMonthly(l)))}/mo · ${money(rr.recognizedYTD)} this yr</span>
+      <select onchange="updContract('${l.id}','billing',this.value)"><option value="recurring" ${bill==="recurring"?"selected":""}>Recurring</option><option value="paidfull" ${bill==="paidfull"?"selected":""}>Paid in full</option><option value="installments" ${bill==="installments"?"selected":""}>Installments</option></select>
+      <input type="number" min="0" value="${l.monthly??""}" placeholder="${bill==="paidfull"?"—":(auto||"auto")}" ${bill==="paidfull"?"disabled":""} onchange="updContract('${l.id}','monthly',this.value)" title="${bill==="paidfull"?"Paid in full — no monthly amount":"Monthly amount — leave blank to use contract ÷ term"}">
+      <input type="number" min="1" value="${l.termMonths??""}" placeholder="12" ${bill==="paidfull"?"disabled":""} onchange="updContract('${l.id}','termMonths',this.value)" title="${bill==="paidfull"?"Paid in full — no term":"Term (months): for installments, the months from first to last payment"}">
+      <input type="date" value="${esc(l.startDate||"")}" onchange="updContract('${l.id}','startDate',this.value)" title="Start date — for Paid in full, the payment date">
+      <span class="calc">${bill==="paidfull"?("one payment · "+money(rr.expectedFullYear)+" this yr"):(money(Math.round(dealMonthly(l)))+"/mo · "+money(rr.expectedFullYear)+" this yr")}</span>
     </div>`; }).join("");
   return `<div class="rep-card rep-full" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Contract terms</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">${won.length} closed-won</span></div>
-    <div class="rsub">This is how Finance knows a $23,000 sale is really a ~$1,917/mo retainer: set each deal's billing, monthly amount, term, and start date. Leave Monthly blank and it's computed as contract ÷ term. These are the same fields as the deal drawer in Pipeline — editing here updates the deal.</div>
+    <div class="rsub">This is how Finance knows a $23,000 sale is really a ~$1,917/mo retainer. Three billing modes: <b>Recurring</b> (a retainer — the monthly amount continues), <b>Paid in full</b> (100% lands on the start date), and <b>Installments</b> (50/50, 3×33%… — the contract splits evenly across the term, so set Term to the months from first to last payment). Sell a job in December with an installment landing next year? Installments + a term spanning the payments splits it across the years automatically. Same fields as the deal drawer in Pipeline — editing here updates the deal.</div>
     <div class="fin-fc" style="margin-top:10px">
       ${box("Booked (sold)",money(r.booked),"total contract value","#5b7fa6")}
       ${box("MRR right now",money(r.mrr),"active monthly recurring","#5b7fa6")}
-      ${box("Recognized this year",money(r.recognizedYTD),"what you'll actually collect","#3f7d5a")}
+      ${box("Expected this year",money(r.expectedFullYear),money(r.recognizedYTD)+" collected so far","#3f7d5a")}
     </div>
     ${won.length?`<div class="ct-head"><span>Deal</span><span>Contract $</span><span>Billing</span><span>Monthly $</span><span>Term</span><span>Start</span><span style="text-align:right">Computed</span></div>${rows}`
       :`<div class="empty-mini">No closed-won deals yet — win one in the Pipeline and set its terms here.</div>`}
@@ -6044,7 +6044,7 @@ function cfoContext(){
   const monthly=(f.months||[]).filter(mo=>mo.income||mo.expenses).map(mo=>`${(mo.month||'').slice(0,3)}: inc ${money(mo.income)}, exp ${money(mo.expenses)}, net ${money(mo.netProfit)}`).join("; ");
   const subsLines=subsList().filter(s=>s.active!==false).map(s=>`${s.name||'?'} ${money(Math.round(subMonthly(s)))}/mo`).join(", ")||"none tracked";
   const projLines=(state.projects||[]).filter(p=>!p.archived&&(projRevenue(p)>0||projCostTotal(p)>0)).map(p=>{const rev=projRevenue(p),c=projCostTotal(p);return `${p.name}: rev ${money(rev)}, cost ${money(c)}, margin ${rev?Math.round((rev-c)/rev*100):0}%`;}).join("; ")||"none set";
-  const wonLines=(state.pipeline||[]).filter(l=>isWon(l.stage)).map(l=>`${l.name}: ${money(l.contractValue||0)} ${l.recurring===false?"one-time":"recurring"} ${money(Math.round(dealMonthly(l)))}/mo${l.startDate?(" from "+l.startDate):""}`).join("; ")||"none";
+  const wonLines=(state.pipeline||[]).filter(l=>isWon(l.stage)).map(l=>`${l.name}: ${money(l.contractValue||0)} ${dealBilling(l)}${dealBilling(l)==="paidfull"?"":(" "+money(Math.round(dealMonthly(l)))+"/mo")}${l.startDate?(" from "+l.startDate):""}`).join("; ")||"none";
   const tx=(state.meta&&state.meta.txns&&Array.isArray(state.meta.txns.list))?state.meta.txns.list:[];
   const det=tx.length?detectRecurring(tx):[];
   const scrub=s=>String(s||"").replace(/[\r\n\t]+/g," ").replace(/[<>{}`]/g,"").slice(0,60);
@@ -8686,10 +8686,20 @@ function saveRevActual(v){ state.meta=state.meta||{}; state.meta.revenueActual=+
    show booked (sales) alongside recognized/collected revenue (matches QuickBooks). */
 function dealMonthly(l){ if(l.monthly!=null&&l.monthly!==""&&!isNaN(+l.monthly))return +l.monthly; const t=(l.termMonths>0)?l.termMonths:12; return (l.contractValue||0)/t; }
 function dealTerm(l){ return (l.termMonths>0)?l.termMonths:12; }
-function dealRecurring(l){ return l.recurring!==false; }  // default recurring
+function dealRecurring(l){ return dealBilling(l)==="recurring"; }
+/* Billing modes: "recurring" (retainer, continues monthly), "paidfull" (100% at
+   the start date), "installments" (split evenly across the term — 50/50, 3x33%,
+   etc). Old deals saved with recurring:false map to "installments" (same math). */
+function dealBilling(l){ return l.billing||(l.recurring===false?"installments":"recurring"); }
 function dealStart(l){ return (l.startDate&&/^\d{4}-\d{2}-\d{2}$/.test(l.startDate))?new Date(l.startDate+"T00:00:00"):null; }
 // Per-deal revenue within a calendar year, given the current month index (0-11).
 function dealRevenueYear(l,year,curM){
+  if(dealBilling(l)==="paidfull"){
+    const full=Math.round(l.contractValue||0); const st=dealStart(l);
+    const sy=st?st.getFullYear():year, sm=st?st.getMonth():0;
+    if(sy!==year) return {monthly:0,recognizedYTD:0,remainingThisYear:0,expectedFullYear:0,activeMonthlyNow:0};
+    return {monthly:0,recognizedYTD:(sm<=curM)?full:0,remainingThisYear:(sm>curM)?full:0,expectedFullYear:full,activeMonthlyNow:0};
+  }
   const mo=dealMonthly(l), recurring=dealRecurring(l), term=dealTerm(l), start=dealStart(l);
   let startIdx;
   if(start){ const sy=start.getFullYear(),sm=start.getMonth(); if(sy<year)startIdx=0; else if(sy===year)startIdx=sm; else return {monthly:mo,recognizedYTD:0,remainingThisYear:0,expectedFullYear:0,activeMonthlyNow:0}; }
