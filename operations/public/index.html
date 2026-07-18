@@ -1118,6 +1118,8 @@
   .stat-color{ width:34px; height:32px; padding:2px; border:1.5px solid var(--line2); border-radius:8px; background:var(--surface); cursor:pointer; flex-shrink:0 }
   .stat-label{ flex:1; min-width:0 }
   .stat-kind{ width:118px; flex-shrink:0 }
+  .stat-prob{ display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0 }
+  .stat-prob input{ width:52px;padding:6px;border:1px solid var(--line2);border-radius:7px;background:var(--surface);color:var(--ink);text-align:right;font:inherit }
   .stat-mv,.stat-del{ width:32px; height:32px; border:1.5px solid var(--line2); border-radius:8px; background:var(--surface); color:var(--ink2); font-weight:800; cursor:pointer; flex-shrink:0; line-height:1 }
   .stat-mv:disabled{ opacity:.35; cursor:default }
   .stat-mv:hover:not(:disabled){ border-color:var(--accent); color:var(--accent-dark) }
@@ -5731,9 +5733,9 @@ function renderTime(m){
 }
 /* ===== FINANCE DASHBOARD ===== */
 function finActiveMonths(f){ const all=(f&&f.months)||[]; let last=-1; all.forEach((m,i)=>{ if(m.income||m.expenses||m.netProfit)last=i; }); return last>=0?all.slice(0,last+1):[]; }
-function finIncExpChart(months,mOff){
+function finIncExpChart(months,mOff,pv){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
-  const off=+mOff||0;
+  const off=+mOff||0, P=pv?1:0;
   const shI=_finSeries.income!==false, shE=_finSeries.expenses!==false;
   const W=680,H=210,padL=52,padR=10,padT=12,padB=30, pw=W-padL-padR, ph=H-padT-padB;
   const max=Math.max(1,...months.map(m=>Math.max(shI?m.income:0,shE?m.expenses:0)));
@@ -5742,15 +5744,15 @@ function finIncExpChart(months,mOff){
   const grid=[0,0.5,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${money(Math.round(v))}</text>`; }).join("");
   let bars="";
   months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1, oi=off+i;
-    if(shI)bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" onclick="openFinMonth(${oi})" data-tip="${esc(m.month)} · income ${money(m.income)} · click for detail"></rect>`;
-    if(shE)bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" onclick="openFinMonth(${oi})" data-tip="${esc(m.month)} · expenses ${money(m.expenses)} · click for detail"></rect>`;
+    if(shI)bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · income ${money(m.income)} · click for detail"></rect>`;
+    if(shE)bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · expenses ${money(m.expenses)} · click for detail"></rect>`;
     bars+=`<text x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span class="leg-btn ${shI?"":"off"}" onclick="toggleFinSeries('income')" title="Click to show or hide"><i style="background:#5e8c61"></i>Income</span><span class="leg-btn ${shE?"":"off"}" onclick="toggleFinSeries('expenses')" title="Click to show or hide"><i style="background:#CB6E55"></i>Expenses</span></div>`;
 }
-function finCumNetChart(months,baseCum,mOff){
+function finCumNetChart(months,baseCum,mOff,pv){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
-  const off=+mOff||0;
+  const off=+mOff||0, P=pv?1:0;
   let cum=+baseCum||0; const pts=months.map(m=>({month:m.month,cum:cum+=(m.netProfit||0)}));
   const W=680,H=190,padL=52,padR=10,padT=12,padB=28, pw=W-padL-padR, ph=H-padT-padB;
   const vals=pts.map(p=>p.cum); const max=Math.max(1,...vals,0), min=Math.min(0,...vals), range=Math.max(1,max-min);
@@ -5763,7 +5765,7 @@ function finCumNetChart(months,baseCum,mOff){
     <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" fill="var(--muted)">$0</text>
     <path d="${area}" fill="color-mix(in srgb,#5b7fa6 15%,transparent)"/>
     <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.5"/>
-    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" onclick="openFinMonth(${off+i})" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))} · click for detail"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
+    ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" onclick="openFinMonth(${off+i},${P})" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))} · click for detail"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
     ${pts.map((p,i)=>`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((p.month||"").slice(0,3))}</text>`).join("")}
   </svg>`;
 }
@@ -6308,8 +6310,17 @@ function bookedThisYearVal(){ const y=new Date().getFullYear(); return (state.pi
 function pipelineOpenVal(){ return (state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).reduce((s,l)=>s+(l.contractValue||0),0); }
 function pipelineWeightedVal(){ return Math.round((state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).reduce((s,l)=>{const st=STAGES.find(x=>x.key===l.stage);return s+(l.contractValue||0)*((st&&st.prob)||0);},0)); }
 function pipelineAtCloseVal(){ const M=salesMath(); return Math.round(pipelineOpenVal()*M.closeRate); }
+/* This-calendar-year cash from an open deal IF it were won: a retainer only pays
+   its monthly amount for the months left in the year; paid-in-full pays at once.
+   Deals with no start date are assumed to start next month. */
+function dealYearCashIfWon(l){ const now=new Date(); const y=now.getFullYear(), cm=now.getMonth();
+  let sd=(l.startDate&&/^\d{4}-\d{2}-\d{2}$/.test(l.startDate))?l.startDate:null;
+  if(!sd){ const abs=y*12+cm+1; sd=Math.floor(abs/12)+"-"+String((abs%12)+1).padStart(2,"0")+"-01"; }
+  return dealRevenueYear(Object.assign({},l,{startDate:sd}),y,cm).remainingThisYear;
+}
+function pipelineYearCash(){ const M=salesMath(); return Math.round((state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).reduce(function(s,l){ return s+dealYearCashIfWon(l); },0)*M.closeRate); }
 function yearProjection(){ const f=(state.meta&&state.meta.financials)||{}; const r=contractRecon();
-  const collected=Math.round(f.income||0), contracted=r.backlogYear, pipe=pipelineAtCloseVal();
+  const collected=Math.round(f.income||0), contracted=r.backlogYear, pipe=pipelineYearCash();
   return {collected:collected, contracted:contracted, pipeline:pipe, total:collected+contracted+pipe}; }
 function openContractedMath(){
   const now=new Date(); const y=now.getFullYear(), cm=now.getMonth();
@@ -6329,9 +6340,9 @@ function openProjectionMath(){
   $("#drawerBody").innerHTML='<div class="mi-hint">Three parts, added up. No magic — each one is checkable.</div>'
     +line("Cash collected so far",p.collected,"straight from QuickBooks")
     +line("+ Contracted rest of year",p.contracted,"signed contracts × months remaining — see it per-deal from the Contracted tile")
-    +line("+ Pipeline at your close rate",p.pipeline,money(pipelineOpenVal())+" of open deals × "+Math.round(M.closeRate*100)+"% close rate ("+(M.closeOverride?"your override":"from your history")+")")
+    +line("+ Pipeline cash landing this year",p.pipeline,money(pipelineOpenVal())+" open × "+Math.round(M.closeRate*100)+"% close = "+money(pipelineAtCloseVal())+" sold — but a retainer won mid-year only pays its remaining months, so "+money(p.pipeline)+" of cash lands in "+new Date().getFullYear()+". Tap tile 3 for the deal-by-deal view.")
     +'<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:800;font-size:16px"><span>Projected '+new Date().getFullYear()+' income</span><span style="color:#3f7d5a">'+money(p.total)+'</span></div>'
-    +'<div class="rsub">Caveat: pipeline deals won later in the year may collect part of their value next year, so treat the pipeline slice as optimistic timing.</div>';
+    +'<div class="rsub">Pipeline deals with no start date are assumed to start next month if won. Set billing, monthly, and start date on each lead card to sharpen this.</div>';
   $("#drawerFoot").innerHTML="";
 }
 let _catCache=[];
@@ -6358,9 +6369,28 @@ function subsDetectedHtml(){
   return '<div class="rsub" style="margin-top:14px;font-weight:800;color:var(--ink)">Detected in your actual books</div><div class="rsub" style="margin-top:2px">Found by scanning your QuickBooks transactions for repeating payees with stable amounts.</div>'+rows;
 }
 /* ---- Overview interactivity: chart range filter, series toggles, month drill-downs ---- */
-let _finRange=0;
-function setFinRange(n){ _finRange=+n||0; if(view==="finance")renderFinance($("#main")); }
-function finViewMonths(f){ const all=finActiveMonths(f); return _finRange>0?all.slice(-_finRange):all; }
+let _finRange="ytd";
+function setFinRange(v){ _finRange=v||"ytd"; if(view==="finance")renderFinance($("#main")); }
+const FIN_RANGES=[["ytd","Year to date"],["tm","This month"],["lm","Last month"],["tq","This quarter"],["lq","Last quarter"],["3m","Last 3 months"],["6m","Last 6 months"],["q1","Q1"],["q2","Q2"],["q3","Q3"],["q4","Q4"],["ly","Last year"]];
+function finRangeView(f){
+  const all=finActiveMonths(f); const now=new Date(); const cm=now.getMonth(); const q=Math.floor(cm/3);
+  const r=_finRange||"ytd";
+  const prev=(f&&f.prev&&Array.isArray(f.prev.months)&&f.prev.months.length)?f.prev:null;
+  const win=function(a,b){ a=Math.max(0,a); b=Math.min(all.length-1,b); if(b<a)return {months:[],off:0,prev:false,year:f.year}; return {months:all.slice(a,b+1),off:a,prev:false,year:f.year}; };
+  const pwin=function(a,b){ if(!prev)return {months:[],off:0,prev:true,year:(f.year||now.getFullYear())-1}; b=Math.min(prev.months.length-1,b); return {months:prev.months.slice(a,b+1),off:a,prev:true,year:prev.year}; };
+  if(r==="3m")return win(all.length-3,all.length-1);
+  if(r==="6m")return win(all.length-6,all.length-1);
+  if(r==="tm")return win(cm,cm);
+  if(r==="lm")return cm>0?win(cm-1,cm-1):pwin(11,11);
+  if(r==="tq")return win(q*3,q*3+2);
+  if(r==="lq")return q>0?win((q-1)*3,(q-1)*3+2):pwin(9,11);
+  if(r==="q1")return win(0,2);
+  if(r==="q2")return win(3,5);
+  if(r==="q3")return win(6,8);
+  if(r==="q4")return win(9,11);
+  if(r==="ly")return pwin(0,11);
+  return {months:all,off:0,prev:false,year:f.year};
+}
 let _finSeries={income:true,expenses:true};
 function toggleFinSeries(k){ _finSeries[k]=!_finSeries[k]; if(!_finSeries.income&&!_finSeries.expenses){ _finSeries.income=true; _finSeries.expenses=true; } if(view==="finance")renderFinance($("#main")); }
 function sparkline(vals,color){ const v=(vals||[]).map(Number); if(v.length<2)return ""; const max=Math.max(...v),min=Math.min(...v); if(max===0&&min===0)return "";
@@ -6368,13 +6398,16 @@ function sparkline(vals,color){ const v=(vals||[]).map(Number); if(v.length<2)re
   const x=function(i){ return (i/(v.length-1))*(W-4)+2; }, y=function(n){ return H-2-((n-min)/range)*(H-4); };
   const line=v.map(function(n,i){ return (i?"L":"M")+x(i).toFixed(1)+","+y(n).toFixed(1); }).join(" ");
   return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" style="width:96px;height:22px"><path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" opacity="0.8"/><circle cx="'+x(v.length-1).toFixed(1)+'" cy="'+y(v[v.length-1]).toFixed(1)+'" r="2.4" fill="'+color+'"/></svg>'; }
-function openFinMonth(i){ i=+i; const f=(state.meta&&state.meta.financials)||{}; const all=finActiveMonths(f); const mo=all[i]; if(!mo)return;
-  const key=(f.year||new Date().getFullYear())+"-"+String(i+1).padStart(2,"0");
+function openFinMonth(i,p){ i=+i; const f=(state.meta&&state.meta.financials)||{};
+  const src=p?((f.prev&&Array.isArray(f.prev.months))?f.prev.months:[]):finActiveMonths(f);
+  const yy=p?((f.prev&&f.prev.year)||((f.year||new Date().getFullYear())-1)):(f.year||new Date().getFullYear());
+  const mo=src[i]; if(!mo)return;
+  const key=yy+"-"+String(i+1).padStart(2,"0");
   const t=(state.meta&&state.meta.txns)||null; const tx=(t&&Array.isArray(t.list))?t.list.filter(x=>String(x.d||"").slice(0,7)===key):[];
   openDrawer((mo.month||"Month")+" — detail");
   const box=function(l,v,c){ return '<div style="flex:1;min-width:96px;background:var(--side);border:1px solid var(--line);border-radius:10px;padding:10px 12px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">'+l+'</div><div style="font-family:var(--disp);font-size:20px;font-weight:800;color:'+c+'">'+money(v)+'</div></div>'; };
   let h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+box("Income",mo.income,"#3f7d5a")+box("Expenses",mo.expenses,"#CB6E55")+box("Net",mo.netProfit,(mo.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'</div>';
-  if(!tx.length){ h+='<div class="mi-hint">'+((t&&Array.isArray(t.list)&&t.list.length)?'None of your loaded transactions fall in this month — the list is capped at recent activity, so re-load on the <b>Transactions</b> tab if this month is older.':'To see the actual transactions behind this month, open the <b>Transactions</b> tab once and click <b>Load transactions</b>.')+'</div>'; }
+  if(!tx.length){ h+='<div class="mi-hint">'+(p?'Loaded transactions cover the current year, so last-year months show the summary only.':((t&&Array.isArray(t.list)&&t.list.length)?'None of your loaded transactions fall in this month — the list is capped at recent activity, so re-load on the <b>Transactions</b> tab if this month is older.':'To see the actual transactions behind this month, open the <b>Transactions</b> tab once and click <b>Load transactions</b>.'))+'</div>'; }
   else { h+='<div class="rsub" style="margin:0 0 4px">'+tx.length+' transaction'+(tx.length===1?'':'s')+' from your books</div>'
     +tx.slice(0,140).map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px"><span class="tnum" style="color:var(--ink2);width:40px">'+esc(String(x.d||"").slice(5))+'</span><span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.n||x.t||"—")+'</span><span style="color:var(--muted);font-size:11px">'+esc(x.t||"")+'</span><span style="font-weight:800">'+money(Math.round(Math.abs(+x.a||0)))+'</span></div>').join("")
     +(tx.length>140?'<div class="rsub" style="margin-top:6px">Showing the first 140.</div>':''); }
@@ -6382,15 +6415,23 @@ function openFinMonth(i){ i=+i; const f=(state.meta&&state.meta.financials)||{};
 }
 function openPipelineMath(){
   const open=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage));
-  const M=salesMath(); const total=pipelineOpenVal(), weighted=pipelineWeightedVal(), atClose=pipelineAtCloseVal();
-  const rows=open.map(function(l){ const st=STAGES.find(x=>x.key===l.stage)||{}; const p=Math.round((st.prob||0)*100); return {l:l,st:st,p:p,w:Math.round((l.contractValue||0)*(st.prob||0))}; }).sort((a,b)=>(b.l.contractValue||0)-(a.l.contractValue||0));
+  const M=salesMath(); const y=new Date().getFullYear();
+  const total=pipelineOpenVal(), weighted=pipelineWeightedVal(), atClose=pipelineAtCloseVal();
+  const cashAll=open.reduce(function(s,l){ return s+dealYearCashIfWon(l); },0);
+  const cashClose=pipelineYearCash();
+  const zero=open.filter(function(l){ const st=STAGES.find(x=>x.key===l.stage); return !(st&&st.prob>0); });
+  const zeroStages=[...new Set(zero.map(function(l){ const st=STAGES.find(x=>x.key===l.stage); return (st&&st.label)||l.stage; }))];
+  const rows=open.map(function(l){ const st=STAGES.find(x=>x.key===l.stage)||{}; const p=Math.round((st.prob||0)*100); return {l:l,st:st,p:p,w:Math.round((l.contractValue||0)*(st.prob||0)),c:dealYearCashIfWon(l)}; }).sort((a,b)=>(b.l.contractValue||0)-(a.l.contractValue||0));
   openDrawer("Cash in pipeline — what these numbers mean");
-  $("#drawerBody").innerHTML='<div class="mi-hint">You have '+open.length+' open deal'+(open.length===1?'':'s')+' worth <b>'+money(total)+'</b> if you won every single one. You won\'t win them all — so there are two honest ways to shrink that number down to reality:</div>'
-    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Weighted by stage → '+money(weighted)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Each deal counts only part of its value based on how far along it is. A deal at a 60% stage counts 60% of its value; a brand-new lead barely counts. That\'s all "weighted" means.</div></div>'
-    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">At your close rate → '+money(atClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+money(total)+' × the '+Math.round(M.closeRate*100)+'% of decided deals you historically win'+(M.closeOverride?' (your override)':'')+'. This is tile 4, and it\'s what feeds your year projection.</div></div>'
-    +'<div class="rsub" style="margin:12px 0 4px;font-weight:800;color:var(--ink)">Deal by deal — value · stage · weighted</div>'
-    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(x.st.label||x.l.stage||"")+' · '+x.p+'%</span><span style="font-weight:700;color:var(--ink2)">'+money(x.l.contractValue||0)+'</span><span style="font-weight:800;color:#5b7fa6;min-width:64px;text-align:right">'+money(x.w)+'</span></div>').join("")||'<div class="empty-mini">No open deals right now.</div>')
-    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>All open · weighted</span><span>'+money(total)+' · <span style="color:#5b7fa6">'+money(weighted)+'</span></span></div>';
+  $("#drawerBody").innerHTML='<div class="mi-hint">You have '+open.length+' open deal'+(open.length===1?'':'s')+' worth <b>'+money(total)+'</b> if you won every single one. Three honest ways to shrink that down to reality:</div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Weighted by stage → '+money(weighted)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Each deal counts only part of its value based on how far along it is — a deal at a 60% stage counts 60% of its value; a brand-new lead barely counts.</div>'
+    +(zero.length?('<div style="font-size:12px;color:#c1604a;font-weight:700;margin-top:5px">'+zero.length+' deal'+(zero.length===1?'':'s')+' sit'+(zero.length===1?'s':'')+' in '+zeroStages.map(esc).join(" / ")+' — a stage with <b>0% win odds</b> — so they count $0 here. Give each stage real odds in Settings → Statuses &amp; stages.</div>'):'')
+    +'</div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Sold, at your close rate → '+money(atClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+money(total)+' × the '+Math.round(M.closeRate*100)+'% of decided deals you historically win'+(M.closeOverride?' (your override)':'')+'. That\'s contract value you\'d <b>sell</b> — not cash this year.</div></div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#D9A05B">Cash that lands in '+y+' → '+money(cashClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Winning isn\'t the same as collecting this year: a retainer only pays its monthly amount for the months left in '+y+', while a paid-in-full deal pays everything at once. Won all, these deals would put '+money(cashAll)+' into '+y+' — × your close rate = <b>'+money(cashClose)+'</b>, which is what feeds your year projection. Each deal\'s billing, monthly, and start date live on its lead card; no start date means it\'s assumed to start next month.</div></div>'
+    +'<div class="rsub" style="margin:12px 0 4px;font-weight:800;color:var(--ink)">Deal by deal — value · stage · weighted · '+y+' cash if won</div>'
+    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap"><span style="flex:1;min-width:110px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(x.st.label||x.l.stage||"")+' · '+x.p+'%</span><span style="font-weight:700;color:var(--ink2)">'+money(x.l.contractValue||0)+'</span><span style="font-weight:800;color:#5b7fa6;min-width:56px;text-align:right">'+money(x.w)+'</span><span style="font-weight:800;color:#D9A05B;min-width:56px;text-align:right">'+money(x.c)+'</span></div>').join("")||'<div class="empty-mini">No open deals right now.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px;gap:8px;flex-wrap:wrap"><span>All open</span><span>'+money(total)+' · <span style="color:#5b7fa6">'+money(weighted)+'</span> · <span style="color:#D9A05B">'+money(cashAll)+'</span></span></div>';
   $("#drawerFoot").innerHTML="";
 }
 function openBookedList(){
@@ -6425,9 +6466,10 @@ function finOverviewHtml(f){
   const now=new Date(); const y=now.getFullYear();
   const monthsElapsed=(f.year&&f.year===y)?(now.getMonth()+1):12;
   const allMonths=finActiveMonths(f);
-  const months=finViewMonths(f);
-  const mOff=allMonths.length-months.length;
-  const baseCum=allMonths.slice(0,mOff).reduce(function(s,m){ return s+(m.netProfit||0); },0);
+  const rv=finRangeView(f);
+  const months=rv.months, mOff=rv.off;
+  const srcAll=rv.prev?((f.prev&&f.prev.months)||[]):allMonths;
+  const baseCum=srcAll.slice(0,mOff).reduce(function(s,m){ return s+(m.netProfit||0); },0);
   const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
   const avgBurn=(f.expenses!=null)?Math.round(f.expenses/monthsElapsed):null;
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
@@ -6441,18 +6483,20 @@ function finOverviewHtml(f){
   const thisYear=(!f.year||f.year===y);
   const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
   let _c=0; const cumVals=allMonths.map(function(m){ return _c+=(m.netProfit||0); });
+  const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,monthsElapsed).reduce(function(s,m){ return s+(m.income||0); },0):0;
+  const yoy=(prevYTD>0&&f.income!=null)?Math.round(((f.income||0)-prevYTD)/prevYTD*100):null;
   const tile=function(l,v,sub,col,click,marker,spark){ return '<div class="fin-kpi"'+(click?(' style="cursor:pointer" onclick="'+click+'" title="Click to open"'):'')+'><div class="l">'+l+'</div><div class="v"'+(col?(' style="color:'+col+'"'):'')+'>'+v+'</div><div class="m">'+(sub||'')+(click?' · <span style="color:var(--accent);font-weight:800">'+(marker||'see the math')+'</span>':'')+'</div>'+(spark||'')+'</div>'; };
-  const seg=function(n,lbl){ return '<button class="'+(_finRange===n?'on':'')+'" onclick="setFinRange('+n+')">'+lbl+'</button>'; };
   return ''
-  +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' year-to-date · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
+  +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' year-to-date · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')
+    +(yoy!=null?(' · vs '+money(prevYTD)+' this time last year <b style="color:'+(yoy>=0?'#3f7d5a':'#c1604a')+'">'+(yoy>=0?'+':'')+yoy+'%</b>'):'')+'</div>'
   +'<div class="fin-kpis">'
   +tile('1 · Cash collected YTD',money(f.income),'actually in the door — from QuickBooks','#3f7d5a','openCollectedMath()','month by month',sparkline(allMonths.map(m=>m.income),'#3f7d5a'))
   +tile('2 · Contracted rest of year',money(r.backlogYear),'signed contracts still to collect in '+y,'#D9A05B','openContractedMath()')
   +tile('3 · Cash in pipeline',money(pipelineOpenVal()),'if you won '+(openN===1?'your 1 open deal':'all '+openN+' open deals')+' · realistically ~'+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()','what this means')
-  +tile('4 · At your close rate',money(pipelineAtCloseVal()),'pipeline × '+Math.round(M.closeRate*100)+'% close'+(M.closeOverride?' (your override)':''),'#5b7fa6','openPipelineMath()')
+  +tile('4 · At your close rate',money(pipelineAtCloseVal()),'pipeline × '+Math.round(M.closeRate*100)+'% close · ~'+money(pipelineYearCash())+' lands in '+y,'#5b7fa6','openPipelineMath()')
   +'</div>'
   +'<div class="fin-kpis">'
-  +tile('5 · Projected '+y+' income',money(proj.total),'collected + contracted + pipeline','#3f7d5a','openProjectionMath()')
+  +tile('5 · Projected '+y+' income',money(proj.total),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()')
   +tile('6 · Booked this year',money(bookedThisYearVal()),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal')
   +tile('7 · Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')",'see categories',sparkline(allMonths.map(m=>m.expenses),'#CB6E55'))
   +tile('8 · Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()','month by month',sparkline(cumVals,'#5b7fa6'))
@@ -6467,17 +6511,18 @@ function finOverviewHtml(f){
     +((qboGap!=null&&Math.abs(qboGap)>=Math.max(500,r.recognizedYTD*0.05))?('<div class="rsub" style="margin-top:8px">Reconciliation: QuickBooks shows '+money(f.income)+' collected vs '+money(r.recognizedYTD)+' your contract terms predict — a '+money(Math.abs(qboGap))+' gap. Usually billing timing, un-entered contract terms, or income outside contracts. Check the <b>Contracts</b> tab.</div>'):'')
     +'</div>'):'')
   +smartInsightsCard()
-  +'<div class="fin-filter"><span style="font-size:12px;font-weight:800;color:var(--ink2)">Charts</span><span class="tvseg">'+seg(3,'Last 3 mo')+seg(6,'Last 6 mo')+seg(0,'Full year')+'</span><span style="font-size:11.5px;color:var(--muted);font-weight:600">click a bar or month for its transactions · click a legend item to hide that series</span></div>'
+  +'<div class="fin-filter"><span style="font-size:12px;font-weight:800;color:var(--ink2)">Charts</span><select class="input" style="width:auto;padding:7px 10px;font-size:12.5px;font-weight:700" onchange="setFinRange(this.value)">'+FIN_RANGES.map(function(o){ return '<option value="'+o[0]+'"'+(_finRange===o[0]?' selected':'')+'>'+o[1]+(o[0]==='ly'&&f.prev&&f.prev.year?(' ('+f.prev.year+')'):'')+'</option>'; }).join("")+'</select><span style="font-size:11.5px;color:var(--muted);font-weight:600">click a bar or month for its transactions · click a legend item to hide that series</span></div>'
+  +((rv.prev&&!months.length)?'<div class="rsub" style="margin:-6px 0 12px">Last year\'s numbers arrive with your next <b>Sync from QuickBooks</b> — run a sync and they\'ll show here.</div>':'')
   +'<div class="fin-row2">'
-  +'<div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div><div class="fin-fill">'+finIncExpChart(months,mOff)+'</div></div>'
-  +'<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff)+'</div></div>'
+  +'<div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">'+(rv.prev?('Last year — '+(rv.year||'')):'Where the spread is tight')+'</div><div class="fin-fill">'+finIncExpChart(months,mOff,rv.prev)+'</div></div>'
+  +'<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff,rv.prev)+'</div></div>'
   +'</div>'
   +finExtraRow()
   +'<div class="fin-row2 fin-asym">'
   +'<div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div><div class="fin-fill">'+chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(function(rr){return rr.value>0;}),money(f.income))+'</div></div>'
   +'<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net — click a month for its transactions</div>'
   +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>'
-  +(months.map(function(mo,i){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer" onclick="openFinMonth('+(mOff+i)+')" title="Click for this month\'s transactions"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+' <span style="color:var(--muted);font-size:10px">›</span></span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
+  +(months.map(function(mo,i){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer" onclick="openFinMonth('+(mOff+i)+','+(rv.prev?1:0)+')" title="Click for this month\'s transactions"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+' <span style="color:var(--muted);font-size:10px">›</span></span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
   +'</div></div>';
 }
 function renderFinance(m){
@@ -9058,8 +9103,8 @@ function openFieldEditor(scope,field){ const edit=!!field; const f=field||{id:ui
     if(!edit)cfPool(scope).push(f); save(); closePanel(); try{render();}catch(e){} toast(edit?"Field saved":"Field added"); if(scope!=null)openFieldsManager(scope); });
 }
 function statusKindOpts(which,cur){ const opts=which==="stages"?[["open","In play"],["won","Won"],["lost","Lost"],["dq","No fit / unresponsive"]]:[["open","Active"],["done","Done"]]; return opts.map(o=>`<option value="${o[0]}" ${cur===o[0]?"selected":""}>${o[1]}</option>`).join(""); }
-function statusRowsHtml(which){ const arr=(state.config&&state.config[which])||[]; if(!arr.length)return '<div class="rsub" style="margin:0">None yet.</div>'; return arr.map((s,i)=>`<div class="stat-row"><input type="color" class="stat-color" value="${(s.color||"#9aa7b2")}" oninput="setStatusField('${which}',${i},'color',this.value)" title="Color"><input class="input stat-label" value="${esc(s.label)}" oninput="setStatusField('${which}',${i},'label',this.value)"><select class="input stat-kind" onchange="setStatusField('${which}',${i},'kind',this.value)">${statusKindOpts(which,s.kind||"open")}</select><button class="stat-mv" onclick="moveStatus('${which}',${i},-1)" ${i===0?"disabled":""}>↑</button><button class="stat-mv" onclick="moveStatus('${which}',${i},1)" ${i===arr.length-1?"disabled":""}>↓</button><button class="stat-del" onclick="delStatus('${which}',${i})" title="Remove">×</button></div>`).join(""); }
-function setStatusField(which,i,field,val){ const arr=state.config[which]; if(!arr||!arr[i])return; arr[i][field]=val; syncConfig(); save(); }
+function statusRowsHtml(which){ const arr=(state.config&&state.config[which])||[]; if(!arr.length)return '<div class="rsub" style="margin:0">None yet.</div>'; return arr.map((s,i)=>`<div class="stat-row"><input type="color" class="stat-color" value="${(s.color||"#9aa7b2")}" oninput="setStatusField('${which}',${i},'color',this.value)" title="Color"><input class="input stat-label" value="${esc(s.label)}" oninput="setStatusField('${which}',${i},'label',this.value)">${which==="stages"?`<span class="stat-prob" title="Win odds — how likely a deal in this stage is to close. Powers the weighted pipeline number and each new lead's value."><input type="number" min="0" max="100" value="${Math.round((s.prob||0)*100)}" onchange="setStatusField('stages',${i},'prob',this.value)">%</span>`:""}<select class="input stat-kind" onchange="setStatusField('${which}',${i},'kind',this.value)">${statusKindOpts(which,s.kind||"open")}</select><button class="stat-mv" onclick="moveStatus('${which}',${i},-1)" ${i===0?"disabled":""}>↑</button><button class="stat-mv" onclick="moveStatus('${which}',${i},1)" ${i===arr.length-1?"disabled":""}>↓</button><button class="stat-del" onclick="delStatus('${which}',${i})" title="Remove">×</button></div>`).join(""); }
+function setStatusField(which,i,field,val){ const arr=state.config[which]; if(!arr||!arr[i])return; if(field==="prob")val=Math.max(0,Math.min(100,Math.round(+val||0)))/100; arr[i][field]=val; syncConfig(); save(); if(field==="prob"&&view==="finance")renderFinance($("#main")); }
 function rerenderStatusSection(which){ const el=document.getElementById("statEd_"+which); if(el)el.innerHTML=statusRowsHtml(which); }
 function moveStatus(which,i,dir){ const arr=state.config[which]; const j=i+dir; if(!arr||j<0||j>=arr.length)return; const t=arr[i]; arr[i]=arr[j]; arr[j]=t; syncConfig(); save(); rerenderStatusSection(which); }
 function addStatus(which){ const arr=state.config[which]; const pal=["#CB6E55","#5b7fa6","#5e8c61","#D9A05B","#9b6a9e","#2C3E50"]; arr.push({key:"st_"+uid(),label:which==="stages"?"New Stage":"New Status",color:pal[arr.length%pal.length],kind:"open"}); syncConfig(); save(); rerenderStatusSection(which); }
@@ -9070,7 +9115,7 @@ function qboConnect(){ window.location.href="/api/qbo-connect"; }
 function outlookConnect(){ window.location.href="/api/outlook-connect"; }
 async function outlookDisconnect(btn){ if(!await confirmModal("Disconnect Outlook? You'll need to reconnect to send from your mailbox again.",{title:"Disconnect Outlook",okLabel:"Disconnect",cancelLabel:"Keep connected"}))return; const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Disconnecting\u2026"; await fetch("/api/outlook-disconnect",{method:"POST"}); await refreshConnStatus(); toast("Outlook disconnected"); renderSettings($("#main")); }catch(e){ toast("Could not disconnect."); } finally{ if(btn)btn.textContent=orig||"Disconnect"; } }
 async function outlookSendTest(btn){ const to=(_connStatus&&_connStatus.outlookEmail)||""; if(!to){ toast("Connect Outlook first."); return; } const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending\u2026"; const r=await fetch("/api/outlook-send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({to,subject:"Good Work HQ \u2014 test email",html:'<p>This is a <b>test</b> from Good Work HQ. If this arrived with a working <a href="https://goodworkhq.co">link</a>, Outlook sending is live.</p>'})}); const d=await r.json(); toast(d.ok?("Test sent to "+to):(d.error||"Send failed")); }catch(e){ toast("Could not reach the Outlook send function. Deploy to Netlify with your MS env vars set."); } finally{ if(btn)btn.textContent=orig||"Send test to myself"; } }
-async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],expenseCats:Array.isArray(d.expenseCats)?d.expenseCats.slice(0,12):[],incomeCats:Array.isArray(d.incomeCats)?d.incomeCats.slice(0,8):[],ar:(d.ar&&typeof d.ar==="object")?d.ar:null,year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); render(); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
+async function qboSyncRevenue(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Syncing…"; const r=await fetch("/api/qbo-revenue"); const d=await r.json(); if(d.error){ toast(d.error); } else if(typeof d.revenue==="number"){ state.meta=state.meta||{}; state.meta.revenueMode="manual"; state.meta.revenueActual=d.revenue; const inc=(d.income!=null)?d.income:d.revenue; state.meta.financials={income:inc,expenses:(d.expenses!=null?d.expenses:null),cogs:(d.cogs!=null?d.cogs:null),netProfit:(d.netProfit!=null?d.netProfit:null),months:Array.isArray(d.months)?d.months:[],expenseCats:Array.isArray(d.expenseCats)?d.expenseCats.slice(0,12):[],incomeCats:Array.isArray(d.incomeCats)?d.incomeCats.slice(0,8):[],ar:(d.ar&&typeof d.ar==="object")?d.ar:null,prev:(d.prev&&typeof d.prev==="object")?d.prev:null,year:d.year,syncedAt:Date.now()}; state.connections=state.connections||{}; state.connections.quickbooks=true; save(); render(); toast((d.netProfit!=null)?("Synced — income "+money(inc)+", net profit "+money(d.netProfit)):("Revenue synced from QuickBooks: "+money(d.revenue))); } else { toast("No revenue returned."); } }catch(e){ toast("Could not reach the QuickBooks sync function. Deploy to Netlify with your QuickBooks env vars set."); } finally{ if(btn)btn.textContent=orig||"Sync revenue"; } }
 async function slackTest(btn){ const orig=btn?btn.textContent:""; try{ if(btn)btn.textContent="Sending…"; const r=await fetch("/api/notify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({channel:"slack",text:"Test from Good Work HQ. Your Slack notifications are wired up."})}); const d=await r.json(); toast(d.ok?"Sent to Slack":(d.error||"Slack is not configured yet.")); }catch(e){ toast("Could not reach the notify function. Deploy to Netlify with SLACK_WEBHOOK_URL set."); } finally{ if(btn)btn.textContent=orig||"Send test"; } }
 async function connInfo(){ await alertModal("Slack & SendGrid run from your Automations.\n\nTo make them live you'll add a Slack incoming-webhook URL and a SendGrid API key to a Netlify function, then point an automation at it. The automation rules engine is already built in — see the README for the wiring steps."); }
 function setRevMode(mode){ state.meta=state.meta||{}; state.meta.revenueMode=mode; save(); renderSettings($("#main")); }
