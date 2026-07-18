@@ -678,6 +678,8 @@
 
   /* ============ REPORTS ============ */
   .rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+  .fin-costrow{display:grid;grid-template-columns:minmax(240px,0.85fr) minmax(340px,1.9fr);gap:16px;align-items:start;margin-bottom:16px}
+  @media(max-width:760px){ .fin-costrow{grid-template-columns:1fr} }
   .rep-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
   .rep-card h3{font-family:var(--disp);margin:0 0 4px;font-size:15px;font-weight:700;color:var(--ink)}
   .rep-card .rsub{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:14px}
@@ -5747,6 +5749,42 @@ function bindChartTips(root){
     el.addEventListener("mouseleave",()=>tip.classList.remove("show"));
   });
 }
+/* ===== AI CFO — feeds live financials to Claude for a CFO-style brief ===== */
+function aiCfoCard(){
+  return `<div class="ai-panel" id="aiCfoCard" style="margin-bottom:16px">
+    <div class="ait">✦ AI CFO</div>
+    <div style="font-size:13px;color:var(--ink2);font-weight:600">Claude reads your live financials, contracts, subscriptions, and tax status and gives you a CFO-style brief — what's working, what to watch, and specific moves. Needs your Anthropic API key.</div>
+    <div class="ai-btns" style="margin-top:10px"><button class="btn btn-sm" onclick="aiFinanceBrief()">Brief me on my finances</button></div>
+    <div id="aiCfoOut"></div>
+  </div>`;
+}
+async function aiFinanceBrief(){
+  const out=$("#aiCfoOut"); if(!out)return; if(typeof aiBusy!=="undefined"&&aiBusy)return; try{aiBusy=true;}catch(e){}
+  out.innerHTML=`<div class="ai-out">Reading your books…</div>`;
+  try{
+    const f=(state.meta&&state.meta.financials)||{};
+    const r=contractRecon();
+    const subsMo=Math.round(subsMonthlyTotal());
+    const rate=taxRate(); const net=f.netProfit; const reserved=+((state.meta&&state.meta.taxReserved))||0;
+    const recommended=(net!=null&&net>0)?Math.round(net*rate/100):0;
+    const goal=(typeof revGoalTarget==="function")?revGoalTarget():0;
+    const monthly=(f.months||[]).filter(mo=>mo.income||mo.expenses).map(mo=>`${(mo.month||'').slice(0,3)}: inc ${money(mo.income)}, exp ${money(mo.expenses)}, net ${money(mo.netProfit)}`).join("; ");
+    const subsLines=subsList().filter(s=>s.active!==false).map(s=>`${s.name||'?'} ${money(Math.round(subMonthly(s)))}/mo`).join(", ")||"none tracked";
+    const sys="You are a sharp, plain-spoken fractional CFO for a solo consultant. Be specific and numeric, referencing their real figures. Structure: a 2-3 sentence read of where they stand, then 4-6 prioritized, concrete recommendations as short bullets (start each with '- '). No preamble, no disclaimers, no generic advice.";
+    const usr=`My live numbers for ${f.year||new Date().getFullYear()} year-to-date:
+Income ${money(f.income)}; Expenses ${money(f.expenses)}; Net profit ${money(net)} (${f.income?Math.round(net/f.income*100):0}% margin).
+By month: ${monthly||'n/a'}.
+Bookings (contracts sold) ${money(r.booked)}; Recognized revenue YTD ${money(r.recognizedYTD)}; MRR ${money(r.mrr)}; ARR ${money(r.arr)}; Contracted rest of year ${money(r.backlogYear)}; Expected full-year ${money(r.expectedFullYear)}.
+Annual revenue goal ${money(goal)}.
+Recurring subscriptions ${money(subsMo)}/mo (${subsLines}).
+Taxes: reserving ${rate}% of net; should have set aside ${money(recommended)}, have reserved ${money(reserved)}.
+Context: last year I ran a deficit and didn't save for taxes, so I'm on an IRS payment plan. I need to grow ~20% per year to clear the debt and get into real profit.
+Give me the CFO brief and specific moves.`;
+    const txt=await callClaude([{role:"user",content:usr}],sys,{max_tokens:900});
+    out.innerHTML=`<div class="ai-out" style="white-space:pre-wrap">${esc(txt||"No response — check that your Anthropic API key is set in Netlify.")}</div>`;
+  }catch(e){ out.innerHTML=`<div class="ai-out">Couldn't reach Claude. Make sure your Anthropic API key is set in Netlify, then try again.</div>`; }
+  finally{ try{aiBusy=false;}catch(e){} }
+}
 function renderFinance(m){
   const f=(state.meta&&state.meta.financials)||null;
   const connected=!!(state.connections&&state.connections.quickbooks);
@@ -5796,13 +5834,14 @@ function renderFinance(m){
     <div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">Where the spread is tight</div>${finIncExpChart(months)}</div>
     <div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div>${finCumNetChart(months)}</div>
   </div>
-  <div class="rep-grid">
+  <div class="fin-costrow">
     <div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div>${chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(r=>r.value>0),money(f.income))}</div>
     <div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>
       ${months.map(mo=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px"><span style="font-weight:700">${esc((mo.month||"").slice(0,3))}</span><span style="text-align:right;color:var(--ink2)">${money(mo.income)}</span><span style="text-align:right;color:var(--ink2)">${money(mo.expenses)}</span><span style="text-align:right;font-weight:800;color:${mo.netProfit>=0?"#3f7d5a":"#c1604a"}">${money(mo.netProfit)}</span></div>`).join("")||'<div class="rsub">No monthly data.</div>'}
     </div>
   </div>
+  ${aiCfoCard()}
   ${subsCard()}
   ${taxCard()}`;
   bindChartTips(m);
