@@ -1530,12 +1530,6 @@
   .tls-gap:hover{ color:var(--accent) } .tls-gap .ln{ flex:1;border-top:1px dashed var(--line2) }
   @media(max-width:560px){ .tls-row{ grid-template-columns:1fr auto } .tls-time{ display:none } }
   /* finance dashboard */
-  .fin-kpis{ display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px }
-  @media(max-width:720px){ .fin-kpis{ grid-template-columns:repeat(2,1fr) } }
-  .fin-kpi{ background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 16px }
-  .fin-kpi .l{ font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
-  .fin-kpi .v{ font-family:var(--disp);font-size:27px;font-weight:800;margin-top:3px;line-height:1.1 }
-  .fin-kpi .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:2px }
   .fin-legend{ display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--ink2) }
   .fin-legend i{ display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px }
   .fin-fc{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 4px }
@@ -1547,7 +1541,6 @@
   /* chart hover tooltip */
   .chart-tip{ position:fixed;z-index:2000;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;box-shadow:0 4px 14px -4px rgba(0,0,0,.4) }
   .chart-tip.show{ opacity:1 }
-  .fin-kpi .spark{ display:block;margin-top:7px }
   .fin-filter{ display:flex;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap }
   .leg-btn{ cursor:pointer;user-select:none }
   .leg-btn.off{ opacity:.35;filter:grayscale(1);text-decoration:line-through }
@@ -1582,8 +1575,10 @@
   .wi-chips{ display:flex;flex-wrap:wrap;gap:7px;margin-top:10px }
   .wi-chip{ border:1.5px solid var(--line2);background:var(--surface);color:var(--ink2);font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
   .wi-chip.hot{ border-color:#CB6E55;color:#CB6E55;background:color-mix(in srgb,#CB6E55 10%,transparent) }
-  @media(max-width:1100px){ .fin-hero{ grid-template-columns:1fr 1fr } .fin-strip{ grid-template-columns:repeat(3,1fr) } .fin-strip .st{ border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+3){ border-top:none } .fin-strip .st:nth-child(3n+1){ border-left:none } }
-  @media(max-width:900px){ .fin-hero{ grid-template-columns:1fr } .fin-asym2{ grid-template-columns:1fr } }
+  @media(max-width:1100px){ .fin-hero{ grid-template-columns:1fr 1fr } }
+  @media(min-width:721px) and (max-width:1100px){ .fin-strip{ grid-template-columns:repeat(3,1fr) } .fin-strip .st{ border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+3){ border-top:none } .fin-strip .st:nth-child(3n+1){ border-left:none } }
+  @media(max-width:960px){ .fin-asym2{ grid-template-columns:1fr } }
+  @media(max-width:900px){ .fin-hero{ grid-template-columns:1fr } }
   @media(max-width:720px){ .fin-strip{ grid-template-columns:1fr 1fr } .fin-strip .st{ border-left:none;border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+2){ border-top:none } .fin-hero-t .v{ font-size:31px } }
   @media(max-width:720px){ .ws-tabs.fin-tabbar{ flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding-bottom:2px } .ws-tabs.fin-tabbar::-webkit-scrollbar{ display:none } .ws-tabs.fin-tabbar .ws-tab{ white-space:nowrap;flex:0 0 auto;padding:9px 11px } }
   /* subscriptions */
@@ -6384,7 +6379,7 @@ function openCatTx(i){
   const c=_catCache[+i]; if(!c)return;
   const tx=(state.meta&&state.meta.txns&&Array.isArray(state.meta.txns.list))?state.meta.txns.list:[];
   const list=tx.filter(x=>String(x.ac||"").toLowerCase()===String(c.name||"").toLowerCase()||String(x.ac||"").toLowerCase().includes(String(c.name||"").toLowerCase()));
-  openDrawer(c.name+" — transactions");
+  openDrawer(esc(c.name)+" — transactions");
   if(!tx.length){ $("#drawerBody").innerHTML='<div class="mi-hint">Load your books first: open the <b>Transactions</b> tab and click <b>Load transactions</b>. Then every category opens to its actual transactions.</div>'; $("#drawerFoot").innerHTML=""; return; }
   const total=list.reduce((s,x)=>s+Math.abs(+x.a||0),0);
   $("#drawerBody").innerHTML='<div class="mi-hint">Everything QuickBooks booked to <b>'+esc(c.name)+'</b> this year.</div>'
@@ -6438,7 +6433,7 @@ function openFinMonth(i,p){ i=+i; const f=(state.meta&&state.meta.financials)||{
   const mo=src[i]; if(!mo)return;
   const key=yy+"-"+String(i+1).padStart(2,"0");
   const t=(state.meta&&state.meta.txns)||null; const tx=(t&&Array.isArray(t.list))?t.list.filter(x=>String(x.d||"").slice(0,7)===key):[];
-  openDrawer((mo.month||"Month")+" — detail");
+  openDrawer(esc(mo.month||"Month")+" — detail");
   const box=function(l,v,c){ return '<div style="flex:1;min-width:96px;background:var(--side);border:1px solid var(--line);border-radius:10px;padding:10px 12px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">'+l+'</div><div style="font-family:var(--disp);font-size:20px;font-weight:800;color:'+c+'">'+money(v)+'</div></div>'; };
   let h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+box("Income",mo.income,"#3f7d5a")+box("Expenses",mo.expenses,"#CB6E55")+box("Net",mo.netProfit,(mo.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'</div>';
   if(!tx.length){ h+='<div class="mi-hint">'+(p?'Loaded transactions cover the current year, so last-year months show the summary only.':((t&&Array.isArray(t.list)&&t.list.length)?'None of your loaded transactions fall in this month — the list is capped at recent activity, so re-load on the <b>Transactions</b> tab if this month is older.':'To see the actual transactions behind this month, open the <b>Transactions</b> tab once and click <b>Load transactions</b>.'))+'</div>'; }
@@ -6514,7 +6509,7 @@ function whatIfProjection(k){ const d=_wiCache||(_wiCache=whatIfData()); k=Math.
 }
 function scenarioCard(){
   _wiCache=whatIfData(); const d=_wiCache;
-  const show=d.deals.filter(function(x){ return x.value>0; });
+  const show=d.deals.filter(function(x){ return x.value>0||x.hot; });
   if(!show.length)return "";
   const hotN=d.deals.filter(function(x){ return x.hot; }).length;
   const p=whatIfProjection(hotN), base=whatIfProjection(0).total;
@@ -6568,23 +6563,24 @@ function finOverviewHtml(f){
   const srcAll=rv.prev?((f.prev&&f.prev.months)||[]):allMonths;
   const baseCum=srcAll.slice(0,mOff).reduce(function(s,m){ return s+(m.netProfit||0); },0);
   const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
-  const avgBurn=(f.expenses!=null)?Math.round(f.expenses/monthsElapsed):null;
+  const mAct=allMonths.length||monthsElapsed;
+  const avgBurn=(f.expenses!=null)?Math.round(f.expenses/mAct):null;
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
   const r=contractRecon(); const proj=yearProjection(); const M=salesMath();
   const when=f.syncedAt?new Date(f.syncedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-  const collectedPct=goal?Math.min(100,Math.round((f.income||0)/goal*100)):0;
-  const projPct=goal?Math.min(100,Math.round(proj.total/goal*100)):0;
+  const collectedPctRaw=goal?Math.round((f.income||0)/goal*100):0; const collectedPct=Math.min(100,collectedPctRaw);
+  const projPctRaw=goal?Math.round(proj.total/goal*100):0; const projPct=Math.min(100,projPctRaw);
   const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
   const openN=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).length;
   const wonN=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).length;
   const thisYear=(!f.year||f.year===y);
   const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
-  const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,monthsElapsed).reduce(function(s,m){ return s+(m.income||0); },0):0;
+  const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,Math.min(monthsElapsed,mAct)).reduce(function(s,m){ return s+(m.income||0); },0):0;
   const yoy=(prevYTD>0&&f.income!=null)?Math.round(((f.income||0)-prevYTD)/prevYTD*100):null;
   _wiCache=whatIfData();
   const hotN=_wiCache.deals.filter(function(x){ return x.hot; }).length;
   const hotProj=hotN?whatIfProjection(hotN).total:null;
-  const hotPct=(hotProj!=null&&goal)?Math.min(100,Math.round(hotProj/goal*100)):null;
+  const hotPctRaw=(hotProj!=null&&goal)?Math.round(hotProj/goal*100):null; const hotPct=hotPctRaw!=null?Math.min(100,hotPctRaw):null;
   const chip=function(txt,tone){ const c=tone==="good"?"#3f7d5a":tone==="bad"?"#c1604a":tone==="warn"?"#b07a2a":"#5b7fa6"; return '<span class="fh-chip" style="color:'+c+';background:color-mix(in srgb,'+c+' 12%,transparent)">'+txt+'</span>'; };
   const hero=function(l,v,ch,cap,col,click,marker){ return '<div class="fin-hero-t" style="border-top:3px solid '+col+'" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="hv"><span class="v" style="color:'+col+'">'+v+'</span>'+(ch||'')+'</div><div class="m">'+cap+' · <span style="color:var(--accent);font-weight:800">'+marker+'</span></div></div>'; };
   const stat=function(l,v,cap,col,click){ return '<div class="st" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="v" style="color:'+col+'">'+v+'</div><div class="s">'+(cap||'')+'</div></div>'; };
@@ -6595,13 +6591,13 @@ function finOverviewHtml(f){
     +'</div>';
   const cumCard='<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff,rv.prev)+'</div></div>';
   const tailCards=[cumCard,cashFlowCard(),arCard(),monthlyCard].filter(function(c){ return c&&c!==""; });
-  let tail=""; for(let i2=0;i2<tailCards.length;i2+=2){ tail+='<div class="fin-row2">'+tailCards[i2]+(tailCards[i2+1]||"<div></div>")+'</div>'; }
+  let tail=""; for(let i2=0;i2<tailCards.length;i2+=2){ tail+=(tailCards[i2+1]!=null)?('<div class="fin-row2">'+tailCards[i2]+tailCards[i2+1]+'</div>'):('<div class="fin-row2" style="grid-template-columns:1fr">'+tailCards[i2]+'</div>'); }
   return ''
   +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
   +'<div class="fin-hero">'
   +hero('Cash collected',money(f.income),(yoy!=null?chip((yoy>=0?'+':'')+yoy+'% vs last year',yoy>=0?'good':'bad'):''),'in the door this year, from QuickBooks','#3f7d5a','openCollectedMath()','month by month')
   +hero('Booked this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal')
-  +hero('Projected '+y+' income',money(proj.total),(goal?chip(projPct+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()','see the math')
+  +hero('Projected '+y+' income',money(proj.total),(goal?chip(projPctRaw+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()','see the math')
   +'</div>'
   +'<div class="fin-strip">'
   +stat('Contracted rest of year',money(r.backlogYear),'signed, still to collect','#D9A05B','openContractedMath()')
@@ -6610,7 +6606,7 @@ function finOverviewHtml(f){
   +stat('Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')")
   +stat('Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()')
   +'</div>'
-  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPct+'%</b> · <b>projected '+projPct+'%</b>'+(hotPct!=null?(' · <b style="color:#CB6E55">hot deals in: '+hotPct+'%</b>'):'')+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(projPct>=100?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
+  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPctRaw+'%</b> · <b>projected '+projPctRaw+'%</b>'+(hotPctRaw!=null?(' · <b style="color:#CB6E55">hot deals in: '+hotPctRaw+'%</b>'):'')+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(proj.total>=goal?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
     +'<div style="position:relative;height:14px;background:var(--side);border-radius:8px;overflow:hidden">'
     +'<div style="position:absolute;inset:0;width:'+projPct+'%;background:color-mix(in srgb,#5b7fa6 45%,transparent)"></div>'
     +'<div style="position:absolute;inset:0;width:'+collectedPct+'%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div>'
