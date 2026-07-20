@@ -1449,12 +1449,6 @@
   .tls-gap:hover{ color:var(--accent) } .tls-gap .ln{ flex:1;border-top:1px dashed var(--line2) }
   @media(max-width:560px){ .tls-row{ grid-template-columns:1fr auto } .tls-time{ display:none } }
   /* finance dashboard */
-  .fin-kpis{ display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px }
-  @media(max-width:720px){ .fin-kpis{ grid-template-columns:repeat(2,1fr) } }
-  .fin-kpi{ background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:14px 16px }
-  .fin-kpi .l{ font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
-  .fin-kpi .v{ font-family:var(--disp);font-size:27px;font-weight:800;margin-top:3px;line-height:1.1 }
-  .fin-kpi .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:2px }
   .fin-legend{ display:flex;gap:16px;justify-content:center;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--ink2) }
   .fin-legend i{ display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px }
   .fin-fc{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 4px }
@@ -1466,23 +1460,45 @@
   /* chart hover tooltip */
   .chart-tip{ position:fixed;z-index:2000;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:6px;opacity:0;transition:opacity .1s;white-space:nowrap;box-shadow:0 4px 14px -4px rgba(0,0,0,.4) }
   .chart-tip.show{ opacity:1 }
-  .fin-kpi .spark{ display:block;margin-top:7px }
   .fin-filter{ display:flex;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap }
   .leg-btn{ cursor:pointer;user-select:none }
   .leg-btn.off{ opacity:.35;filter:grayscale(1);text-decoration:line-through }
   .goal-pace{ position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5 }
-  .fin-hero{ display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px }
-  .fin-hero-t{ background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;cursor:pointer;min-width:0 }
+  .fin-hero{ display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px }
+  .fin-hero-t{ background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;min-width:0 }
   .fin-hero-t .l{ font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
-  .fin-hero-t .v{ font-family:var(--disp);font-size:36px;font-weight:800;margin-top:4px;line-height:1.05 }
-  .fin-hero-t .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:3px }
-  .fin-kpis.fin-kpis5{ grid-template-columns:repeat(5,1fr) }
-  @media(max-width:1100px){ .fin-hero{ grid-template-columns:1fr 1fr } }
-  @media(max-width:900px){ .fin-hero{ grid-template-columns:1fr } .fin-kpis.fin-kpis5{ grid-template-columns:repeat(2,1fr) } }
+  .fin-hero-t .hv{ display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px }
+  .fin-hero-t .v{ font-family:var(--disp);font-size:38px;font-weight:800;line-height:1.02 }
+  .fh-chip{ font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap }
+  .fin-hero-t .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:7px }
+  .fin-strip{ display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:16px;overflow:hidden }
+  .fin-strip .st{ padding:14px 16px;cursor:pointer;min-width:0;border-left:1px solid var(--line) }
+  .fin-strip .st:first-child{ border-left:none }
+  .fin-strip .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
+  .fin-strip .v{ font-family:var(--disp);font-size:22px;font-weight:800;margin-top:3px }
+  .fin-strip .s{ font-size:11px;color:var(--ink2);font-weight:600;margin-top:2px }
+  .fin-asym2{ grid-template-columns:minmax(340px,1.9fr) minmax(250px,1fr) }
+  .rc-head{ display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap }
+  .dnl-row{ display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer }
+  .dnl-row i{ width:10px;height:10px;border-radius:3px;flex-shrink:0 }
+  .dnl-row .n{ flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+  .dnl-row .a{ font-weight:800 }
+  .dnl-row .ar{ color:var(--muted);font-size:11px }
+  .sc-wrap{ display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap }
+  .sc-left{ flex:1;min-width:260px }
+  .sc-right{ min-width:210px;padding:12px 16px;background:var(--side);border:1px solid var(--line);border-radius:12px }
+  .sc-right .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
+  .sc-right .v{ font-family:var(--disp);font-size:30px;font-weight:800;color:#3f7d5a;margin-top:2px }
+  .sc-right .s{ font-size:11.5px;font-weight:700;color:var(--ink2);margin-top:2px }
+  .sc-right .s2{ font-size:11.5px;font-weight:800;color:#3f7d5a;margin-top:4px }
   .wi-chips{ display:flex;flex-wrap:wrap;gap:7px;margin-top:10px }
   .wi-chip{ border:1.5px solid var(--line2);background:var(--surface);color:var(--ink2);font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
-  .wi-chip.sel{ border-color:var(--accent);color:var(--accent-dark);background:color-mix(in srgb,var(--accent) 10%,transparent) }
   .wi-chip.hot{ border-color:#CB6E55;color:#CB6E55;background:color-mix(in srgb,#CB6E55 10%,transparent) }
+  @media(max-width:1100px){ .fin-hero{ grid-template-columns:1fr 1fr } }
+  @media(min-width:721px) and (max-width:1100px){ .fin-strip{ grid-template-columns:repeat(3,1fr) } .fin-strip .st{ border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+3){ border-top:none } .fin-strip .st:nth-child(3n+1){ border-left:none } }
+  @media(max-width:960px){ .fin-asym2{ grid-template-columns:1fr } }
+  @media(max-width:900px){ .fin-hero{ grid-template-columns:1fr } }
+  @media(max-width:720px){ .fin-strip{ grid-template-columns:1fr 1fr } .fin-strip .st{ border-left:none;border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+2){ border-top:none } .fin-hero-t .v{ font-size:31px } }
   @media(max-width:720px){ .ws-tabs.fin-tabbar{ flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding-bottom:2px } .ws-tabs.fin-tabbar::-webkit-scrollbar{ display:none } .ws-tabs.fin-tabbar .ws-tab{ white-space:nowrap;flex:0 0 auto;padding:9px 11px } }
   /* subscriptions */
   .sub-head,.sub-row{ display:grid;grid-template-columns:24px 1.4fr 1fr 104px 118px 78px 28px;gap:8px;align-items:center }
@@ -5863,16 +5879,16 @@ function finIncExpChart(months,mOff,pv){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
   const off=+mOff||0, P=pv?1:0;
   const shI=_finSeries.income!==false, shE=_finSeries.expenses!==false;
-  const W=680,H=210,padL=52,padR=10,padT=12,padB=30, pw=W-padL-padR, ph=H-padT-padB;
+  const W=680,H=232,padL=42,padR=8,padT=16,padB=28, pw=W-padL-padR, ph=H-padT-padB;
   const max=Math.max(1,...months.map(m=>Math.max(shI?m.income:0,shE?m.expenses:0)));
-  const gw=pw/n, bw=Math.min(15,gw*0.3);
+  const gw=pw/n, bw=Math.min(22,gw*0.34);
   const y=v=>padT+ph-(v/max)*ph;
-  const grid=[0,0.5,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${money(Math.round(v))}</text>`; }).join("");
+  const grid=[0,0.25,0.5,0.75,1].map(fr=>{ const v=max*fr; return `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-width="${fr===0?1:0.6}"/>`+(fr>0?`<text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" text-anchor="end" font-size="9" font-weight="700" fill="var(--muted)">${kfmt(Math.round(v))}</text>`:''); }).join("");
   let bars="";
-  months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1, ex=cx+1, oi=off+i;
-    if(shI)bars+=`<rect x="${ix.toFixed(1)}" y="${y(m.income).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.income)).toFixed(1)}" rx="2" fill="#5e8c61" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · income ${money(m.income)} · click for detail"></rect>`;
-    if(shE)bars+=`<rect x="${ex.toFixed(1)}" y="${y(m.expenses).toFixed(1)}" width="${bw.toFixed(1)}" height="${(padT+ph-y(m.expenses)).toFixed(1)}" rx="2" fill="#CB6E55" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · expenses ${money(m.expenses)} · click for detail"></rect>`;
-    bars+=`<text x="${cx.toFixed(1)}" y="${H-11}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
+  months.forEach((m,i)=>{ const cx=padL+i*gw+gw/2, ix=cx-bw-1.5, ex=cx+1.5, oi=off+i;
+    if(shI)bars+=`<rect x="${ix.toFixed(1)}" y="${Math.min(y(m.income),padT+ph-1.5).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1.5,padT+ph-y(m.income)).toFixed(1)}" rx="3" fill="#5e8c61" opacity="0.92" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · income ${money(m.income)} · click for detail"></rect>`;
+    if(shE)bars+=`<rect x="${ex.toFixed(1)}" y="${Math.min(y(m.expenses),padT+ph-1.5).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1.5,padT+ph-y(m.expenses)).toFixed(1)}" rx="3" fill="#CB6E55" opacity="0.92" style="cursor:pointer" onclick="openFinMonth(${oi},${P})" data-tip="${esc(m.month)} · expenses ${money(m.expenses)} · click for detail"></rect>`;
+    bars+=`<text x="${cx.toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--muted)">${esc((m.month||"").slice(0,3))}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">${grid}${bars}</svg><div class="fin-legend"><span class="leg-btn ${shI?"":"off"}" onclick="toggleFinSeries('income')" title="Click to show or hide"><i style="background:#5e8c61"></i>Income</span><span class="leg-btn ${shE?"":"off"}" onclick="toggleFinSeries('expenses')" title="Click to show or hide"><i style="background:#CB6E55"></i>Expenses</span></div>`;
 }
@@ -5880,7 +5896,7 @@ function finCumNetChart(months,baseCum,mOff,pv){
   const n=months.length; if(!n)return '<div class="rsub">No monthly data yet.</div>';
   const off=+mOff||0, P=pv?1:0;
   let cum=+baseCum||0; const pts=months.map(m=>({month:m.month,cum:cum+=(m.netProfit||0)}));
-  const W=680,H=190,padL=52,padR=10,padT=12,padB=28, pw=W-padL-padR, ph=H-padT-padB;
+  const W=680,H=190,padL=42,padR=10,padT=12,padB=28, pw=W-padL-padR, ph=H-padT-padB;
   const vals=pts.map(p=>p.cum); const max=Math.max(1,...vals,0), min=Math.min(0,...vals), range=Math.max(1,max-min);
   const x=i=>padL+(n<=1?pw/2:(i/(n-1))*pw), y=v=>padT+ph-((v-min)/range)*ph;
   const line=pts.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(p.cum).toFixed(1)}`).join(" ");
@@ -5888,9 +5904,9 @@ function finCumNetChart(months,baseCum,mOff,pv){
   const zeroY=y(0).toFixed(1);
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">
     <line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="var(--line2)" stroke-dasharray="3 3"/>
-    <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" fill="var(--muted)">$0</text>
+    <text x="${padL-6}" y="${zeroY}" text-anchor="end" font-size="9" font-weight="700" fill="var(--muted)">$0</text>
     <path d="${area}" fill="color-mix(in srgb,#5b7fa6 15%,transparent)"/>
-    <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.5"/>
+    <path d="${line}" fill="none" stroke="#5b7fa6" stroke-width="2.2" stroke-linecap="round"/>
     ${pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="5" fill="transparent" style="cursor:pointer" onclick="openFinMonth(${off+i},${P})" data-tip="${esc(p.month)} · cumulative net ${money(Math.round(p.cum))} · click for detail"></circle><circle cx="${x(i).toFixed(1)}" cy="${y(p.cum).toFixed(1)}" r="2.6" fill="#5b7fa6" style="pointer-events:none"></circle>`).join("")}
     ${pts.map((p,i)=>`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc((p.month||"").slice(0,3))}</text>`).join("")}
   </svg>`;
@@ -6306,8 +6322,9 @@ function finInsightsList(){
 function smartInsightsCard(){
   const list=finInsightsList(); if(!list.length)return "";
   const dot=t=>t==="good"?"#3f7d5a":t==="warn"?"#CB6E55":"#5b7fa6";
-  const rows=list.slice(0,7).map(i=>'<div class="si-row"><span class="si-dot" style="background:'+dot(i.tone)+'"></span><span>'+esc(i.text)+'</span></div>').join("");
-  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Smart insights</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">computed from your live data</span></div><div style="margin-top:6px">'+rows+'</div></div>';
+  const rows=list.slice(0,4).map(i=>'<div class="si-row"><span class="si-dot" style="background:'+dot(i.tone)+'"></span><span>'+esc(i.text)+'</span></div>').join("");
+  const right=list.length>4?('<button class="link-btn" style="margin-left:auto" onclick="openAllInsights()">all '+list.length+' insights →</button>'):'<span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">computed from your live data</span>';
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Smart insights</h3>'+right+'</div><div style="margin-top:6px">'+rows+'</div></div>';
 }
 function arCard(){
   const f=(state.meta&&state.meta.financials)||{}; const ar=f.ar;
@@ -6476,7 +6493,7 @@ function openCatTx(i){
   const c=_catCache[+i]; if(!c)return;
   const tx=(state.meta&&state.meta.txns&&Array.isArray(state.meta.txns.list))?state.meta.txns.list:[];
   const list=tx.filter(x=>String(x.ac||"").toLowerCase()===String(c.name||"").toLowerCase()||String(x.ac||"").toLowerCase().includes(String(c.name||"").toLowerCase()));
-  openDrawer(c.name+" — transactions");
+  openDrawer(esc(c.name)+" — transactions");
   if(!tx.length){ $("#drawerBody").innerHTML='<div class="mi-hint">Load your books first: open the <b>Transactions</b> tab and click <b>Load transactions</b>. Then every category opens to its actual transactions.</div>'; $("#drawerFoot").innerHTML=""; return; }
   const total=list.reduce((s,x)=>s+Math.abs(+x.a||0),0);
   $("#drawerBody").innerHTML='<div class="mi-hint">Everything QuickBooks booked to <b>'+esc(c.name)+'</b> this year.</div>'
@@ -6530,7 +6547,7 @@ function openFinMonth(i,p){ i=+i; const f=(state.meta&&state.meta.financials)||{
   const mo=src[i]; if(!mo)return;
   const key=yy+"-"+String(i+1).padStart(2,"0");
   const t=(state.meta&&state.meta.txns)||null; const tx=(t&&Array.isArray(t.list))?t.list.filter(x=>String(x.d||"").slice(0,7)===key):[];
-  openDrawer((mo.month||"Month")+" — detail");
+  openDrawer(esc(mo.month||"Month")+" — detail");
   const box=function(l,v,c){ return '<div style="flex:1;min-width:96px;background:var(--side);border:1px solid var(--line);border-radius:10px;padding:10px 12px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">'+l+'</div><div style="font-family:var(--disp);font-size:20px;font-weight:800;color:'+c+'">'+money(v)+'</div></div>'; };
   let h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+box("Income",mo.income,"#3f7d5a")+box("Expenses",mo.expenses,"#CB6E55")+box("Net",mo.netProfit,(mo.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'</div>';
   if(!tx.length){ h+='<div class="mi-hint">'+(p?'Loaded transactions cover the current year, so last-year months show the summary only.':((t&&Array.isArray(t.list)&&t.list.length)?'None of your loaded transactions fall in this month — the list is capped at recent activity, so re-load on the <b>Transactions</b> tab if this month is older.':'To see the actual transactions behind this month, open the <b>Transactions</b> tab once and click <b>Load transactions</b>.'))+'</div>'; }
@@ -6588,35 +6605,8 @@ function openNetMath(){
     +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Net profit YTD</span><span style="color:'+((f.netProfit||0)>=0?"#3f7d5a":"#c1604a")+'">'+money(f.netProfit)+'</span></div>';
   $("#drawerFoot").innerHTML="";
 }
-/* ---- Hero mini-charts, what-if scenario, deal heat ---- */
-function miniBars(vals,color){ const v=(vals||[]).map(n=>Math.max(0,+n||0)); if(!v.length)return "";
-  const W=220,H=44,max=Math.max(1,...v); const gw=W/v.length, bw=Math.max(3,Math.min(14,gw*0.55));
-  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:44px;display:block;margin-top:10px" preserveAspectRatio="none">'+v.map(function(n,i){ const h=Math.max(1.5,(n/max)*(H-4)); const x=i*gw+(gw-bw)/2; return '<rect x="'+x.toFixed(1)+'" y="'+(H-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.5" fill="'+color+'" opacity="'+(0.45+0.55*(i/Math.max(1,v.length-1))).toFixed(2)+'"/>'; }).join("")+'</svg>'; }
-function miniLine(vals,color){ const v=(vals||[]).map(n=>+n||0); if(v.length<2)return "";
-  const W=220,H=44,max=Math.max(1,...v),min=Math.min(0,...v),range=Math.max(1,max-min);
-  const x=function(i){ return (i/(v.length-1))*(W-4)+2; }, y=function(n){ return H-3-((n-min)/range)*(H-8); };
-  const line=v.map(function(n,i){ return (i?"L":"M")+x(i).toFixed(1)+","+y(n).toFixed(1); }).join(" ");
-  const area='M'+x(0).toFixed(1)+','+(H-2)+' '+v.map(function(n,i){ return 'L'+x(i).toFixed(1)+','+y(n).toFixed(1); }).join(' ')+' L'+x(v.length-1).toFixed(1)+','+(H-2)+' Z';
-  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:44px;display:block;margin-top:10px"><path d="'+area+'" fill="color-mix(in srgb,'+color+' 16%,transparent)"/><path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round"/><circle cx="'+x(v.length-1).toFixed(1)+'" cy="'+y(v[v.length-1]).toFixed(1)+'" r="2.6" fill="'+color+'"/></svg>'; }
-function bookedByMonth(){ const y=new Date().getFullYear(), cm=new Date().getMonth();
-  const won=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y);
-  const per=new Array(cm+1).fill(0);
-  won.forEach(function(l){ let d=cm;
-    if(l.decidedAt&&/^\d{4}-\d{2}/.test(l.decidedAt)&&+l.decidedAt.slice(0,4)===y)d=+l.decidedAt.slice(5,7)-1;
-    else if(l.startDate&&/^\d{4}-\d{2}/.test(l.startDate)&&+l.startDate.slice(0,4)===y)d=+l.startDate.slice(5,7)-1;
-    per[Math.max(0,Math.min(cm,d))]+=(l.contractValue||0); });
-  let c=0; return per.map(function(n){ return c+=n; }); }
-function projSegBar(collected,contracted,pipe,goal){
-  const total=collected+contracted+pipe; const maxV=Math.max(goal||0,total,1);
-  const w=function(v){ return Math.max(0,v/maxV*100); }; const gp=goal?Math.min(100,goal/maxV*100):null;
-  return '<div style="position:relative;height:18px;background:var(--side);border-radius:9px;overflow:hidden;margin-top:12px">'
-    +'<div style="position:absolute;top:0;bottom:0;left:0;width:'+w(collected).toFixed(1)+'%;background:#3f7d5a"></div>'
-    +'<div style="position:absolute;top:0;bottom:0;left:'+w(collected).toFixed(1)+'%;width:'+w(contracted).toFixed(1)+'%;background:#D9A05B"></div>'
-    +'<div style="position:absolute;top:0;bottom:0;left:'+(w(collected)+w(contracted)).toFixed(1)+'%;width:'+w(pipe).toFixed(1)+'%;background:#5b7fa6"></div>'
-    +(gp!=null?'<div style="position:absolute;top:0;bottom:0;left:'+gp.toFixed(1)+'%;width:2px;background:var(--ink);opacity:.6"></div>':'')
-    +'</div>'
-    +'<div class="fin-legend" style="justify-content:flex-start;margin-top:6px;font-size:10.5px;gap:10px;flex-wrap:wrap"><span><i style="background:#3f7d5a"></i>Collected</span><span><i style="background:#D9A05B"></i>Contracted</span><span><i style="background:#5b7fa6"></i>Pipeline</span>'+(gp!=null?'<span><i style="background:var(--ink);opacity:.6"></i>Goal</span>':'')+'</div>';
-}
+/* ---- Deal heat scenario, spend donut, insight drawer, helpers ---- */
+function kfmt(v){ v=Math.round(+v||0); const a=Math.abs(v); if(a<1000)return '$'+v; let k=v/1000; k=(a>=10000)?Math.round(k):Math.round(k*10)/10; return '$'+k+'k'; }
 function toggleHeat(id){ const l=(state.pipeline||[]).find(x=>x.id===id); if(!l)return; if(l.heat)delete l.heat; else l.heat=true; save(); if(view==="finance")renderFinance($("#main")); }
 let _wiCache=null;
 function whatIfData(){ const M=salesMath(); const f=(state.meta&&state.meta.financials)||{}; const r=contractRecon();
@@ -6631,30 +6621,52 @@ function whatIfProjection(k){ const d=_wiCache||(_wiCache=whatIfData()); k=Math.
   const restCash=d.deals.slice(k).reduce(function(s,x){ return s+x.cash; },0);
   return {total:Math.round(d.base+selCash+d.closeRate*restCash),selCash:selCash,selValue:sel.reduce(function(s,x){ return s+x.value; },0),k:k,n:d.deals.length};
 }
-function updWhatIf(k){ const d=_wiCache||(_wiCache=whatIfData()); const p=whatIfProjection(k);
-  const el=function(id){ return document.getElementById(id); };
-  if(el("wiNum"))el("wiNum").textContent=money(p.total);
-  if(el("wiPct"))el("wiPct").textContent=d.goal?(Math.round(p.total/d.goal*100)+"% of your "+money(d.goal)+" goal"):"";
-  if(el("wiLbl"))el("wiLbl").textContent="If your top "+p.k+" of "+p.n+" close: "+money(p.selValue)+" in contracts, "+money(p.selCash)+" of cash this year — everyone else at your close rate.";
-  document.querySelectorAll(".wi-chip").forEach(function(c,i){ c.classList.toggle("sel",i<p.k); });
-  const rg=el("wiRange"); if(rg&&+rg.value!==p.k)rg.value=p.k;
-}
-function whatIfCard(){
+function scenarioCard(){
   _wiCache=whatIfData(); const d=_wiCache;
-  if(!d.deals.length)return "";
+  const show=d.deals.filter(function(x){ return x.value>0||x.hot; });
+  if(!show.length)return "";
   const hotN=d.deals.filter(function(x){ return x.hot; }).length;
-  const p=whatIfProjection(hotN);
-  const chips=d.deals.map(function(x,i){ return '<button class="wi-chip'+(x.hot?" hot":"")+(i<hotN?" sel":"")+'" onclick="toggleHeat(\''+x.id+'\')" title="'+esc(x.stage)+' · '+money(x.value)+' contract · '+money(x.cash)+' would land this year — tap to mark hot">'+(x.hot?"🔥 ":"")+esc(x.name)+' · '+money(x.value)+'</button>'; }).join("");
-  return '<div class="rep-card rep-full" style="margin-bottom:16px">'
-    +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">What-if — your call on the pipeline</h3><span style="margin-left:auto;color:var(--faint);font-size:12px;font-weight:700">'+(hotN?(hotN+' hot deal'+(hotN===1?'':'s')+' 🔥'):'tap 🔥 the deals you believe in')+'</span></div>'
-    +'<div class="rsub">Tap a deal to mark it <b>hot</b> — hot deals count in full, stay saved, and show on your goal bar. Or just slide: your best-odds deals close first, and everything unselected stays at your '+Math.round(d.closeRate*100)+'% close rate.</div>'
-    +'<div class="wi-chips">'+chips+'</div>'
-    +'<div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">'
-    +'<input id="wiRange" type="range" min="0" max="'+d.deals.length+'" step="1" value="'+p.k+'" oninput="updWhatIf(this.value)" style="flex:1;min-width:150px;accent-color:var(--accent)">'
-    +'<div style="min-width:190px"><span id="wiNum" style="font-family:var(--disp);font-size:26px;font-weight:800;color:#3f7d5a">'+money(p.total)+'</span><div id="wiPct" style="font-size:11.5px;font-weight:700;color:var(--ink2)">'+(d.goal?(Math.round(p.total/d.goal*100)+'% of your '+money(d.goal)+' goal'):'')+'</div></div>'
-    +'</div>'
-    +'<div id="wiLbl" class="rsub" style="margin-top:4px">If your top '+p.k+' of '+p.n+' close: '+money(p.selValue)+' in contracts, '+money(p.selCash)+' of cash this year — everyone else at your close rate.</div>'
-    +'</div>';
+  const p=whatIfProjection(hotN), base=whatIfProjection(0).total;
+  const chips=show.map(function(x){ return '<button class="wi-chip'+(x.hot?" hot":"")+'" onclick="toggleHeat(\''+x.id+'\')" title="'+esc(x.stage)+' · '+money(x.cash)+' would land this year — tap to '+(x.hot?'unmark':'mark hot')+'">'+(x.hot?"🔥 ":"")+esc(x.name)+' · '+money(x.value)+'</button>'; }).join("");
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div class="sc-wrap">'
+    +'<div class="sc-left"><h3 style="margin:0">Your call — if these deals close</h3>'
+    +'<div class="rsub" style="margin:4px 0 0">Tap the deals you feel good about. 🔥 deals count in full on top of collected + contracted; the rest stay at your '+Math.round(d.closeRate*100)+'% close rate. Your picks are saved and shown on the goal bar.</div>'
+    +'<div class="wi-chips">'+chips+'</div></div>'
+    +'<div class="sc-right">'+(hotN
+      ?('<div class="l">With your '+hotN+' hot deal'+(hotN===1?'':'s')+'</div><div class="v">'+money(p.total)+'</div>'+(d.goal?('<div class="s">'+Math.round(p.total/d.goal*100)+'% of your '+money(d.goal)+' goal</div>'):'')+'<div class="s2">+'+money(p.total-base)+' vs the base projection</div>')
+      :('<div class="l">Nothing marked yet</div><div class="v" style="color:var(--ink2)">'+money(base)+'</div><div class="s">your base projection — tap a deal to see it move</div>'))
+    +'</div></div></div>';
+}
+function openAllInsights(){ const list=(typeof finInsightsList==="function")?finInsightsList():[];
+  const dot=function(t2){ return t2==="good"?"#3f7d5a":t2==="warn"?"#CB6E55":"#5b7fa6"; };
+  openDrawer("Smart insights — all of them");
+  $("#drawerBody").innerHTML=list.map(function(i){ return '<div class="si-row"><span class="si-dot" style="background:'+dot(i.tone)+'"></span><span>'+esc(i.text)+'</span></div>'; }).join("")||'<div class="empty-mini">Nothing yet — sync QuickBooks first.</div>';
+  $("#drawerFoot").innerHTML="";
+}
+function spendDonutCard(f){
+  const PAL=['#CB6E55','#D9A05B','#5b7fa6','#5e8c61','#9b6a9e','#8a8f98'];
+  const cats=(f.expenseCats||[]).filter(function(c){ return c.total>0; });
+  _catCache=cats.slice(0,10);
+  let rows,legend;
+  if(cats.length){
+    const top=cats.slice(0,5);
+    const other=Math.max(0,Math.round((f.expenses||0)-top.reduce(function(s,c){ return s+c.total; },0)));
+    rows=top.map(function(c,i){ return {label:c.name,value:Math.max(0,c.total),color:PAL[i%PAL.length]}; });
+    if(other>0)rows.push({label:"Everything else",value:other,color:PAL[5]});
+    legend=top.map(function(c,i){ return '<div class="dnl-row" onclick="openCatTx('+i+')" title="See these transactions"><i style="background:'+PAL[i%PAL.length]+'"></i><span class="n">'+esc(c.name)+'</span><span class="a">'+money(c.total)+'</span><span class="ar">›</span></div>'; }).join("")
+      +(other>0?('<div class="dnl-row" style="cursor:default"><i style="background:'+PAL[5]+'"></i><span class="n">Everything else</span><span class="a">'+money(other)+'</span><span class="ar"></span></div>'):'');
+  } else {
+    const opex=(f.expenses!=null&&f.cogs!=null)?(f.expenses-f.cogs):(f.expenses||0);
+    rows=[{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:PAL[0]},{label:"Operating",value:Math.max(0,opex),color:PAL[1]},{label:"Profit kept",value:Math.max(0,f.netProfit||0),color:'#5e8c61'}].filter(function(r2){ return r2.value>0; });
+    legend=rows.map(function(r2){ return '<div class="dnl-row" style="cursor:default"><i style="background:'+r2.color+'"></i><span class="n">'+esc(r2.label)+'</span><span class="a">'+money(r2.value)+'</span><span class="ar"></span></div>'; }).join("");
+  }
+  const total=rows.reduce(function(s,r2){ return s+r2.value; },0);
+  let a=-Math.PI/2,segs="";
+  if(total>0){ rows.forEach(function(d2){ if(d2.value<=0)return; let frac=d2.value/total; let a2=a+frac*Math.PI*2; if(frac>=0.9999)a2=a+Math.PI*2-0.0001; segs+=arcSeg(70,70,56,38,a,a2,d2.color); a=a2; }); }
+  else segs='<circle cx="70" cy="70" r="47" fill="none" stroke="var(--side)" stroke-width="18"/>';
+  return '<div class="rep-card"><h3>Where the money goes</h3><div class="rsub">spending by category — click one for its transactions</div>'
+    +'<div style="display:flex;justify-content:center;margin:10px 0 6px"><svg viewBox="0 0 140 140" style="width:132px;height:132px"><g>'+segs+'</g><text x="70" y="66" style="font-size:15px;font-weight:800;fill:var(--ink);text-anchor:middle">'+kfmt(f.expenses||0)+'</text><text x="70" y="82" style="font-size:9.5px;fill:var(--muted);text-anchor:middle;font-weight:700">spent YTD</text></svg></div>'
+    +legend+'</div>';
 }
 function finOverviewHtml(f){
   const now=new Date(); const y=now.getFullYear();
@@ -6665,42 +6677,50 @@ function finOverviewHtml(f){
   const srcAll=rv.prev?((f.prev&&f.prev.months)||[]):allMonths;
   const baseCum=srcAll.slice(0,mOff).reduce(function(s,m){ return s+(m.netProfit||0); },0);
   const margin=f.income?Math.round((f.netProfit/f.income)*100):0;
-  const avgBurn=(f.expenses!=null)?Math.round(f.expenses/monthsElapsed):null;
+  const mAct=allMonths.length||monthsElapsed;
+  const avgBurn=(f.expenses!=null)?Math.round(f.expenses/mAct):null;
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
   const r=contractRecon(); const proj=yearProjection(); const M=salesMath();
-  const opex=(f.expenses!=null&&f.cogs!=null)?(f.expenses-f.cogs):null;
   const when=f.syncedAt?new Date(f.syncedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-  const collectedPct=goal?Math.min(100,Math.round((f.income||0)/goal*100)):0;
-  const projPct=goal?Math.min(100,Math.round(proj.total/goal*100)):0;
+  const collectedPctRaw=goal?Math.round((f.income||0)/goal*100):0; const collectedPct=Math.min(100,collectedPctRaw);
+  const projPctRaw=goal?Math.round(proj.total/goal*100):0; const projPct=Math.min(100,projPctRaw);
   const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
   const openN=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).length;
+  const wonN=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).length;
   const thisYear=(!f.year||f.year===y);
   const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
-  let _c=0; const cumVals=allMonths.map(function(m){ return _c+=(m.netProfit||0); });
-  const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,monthsElapsed).reduce(function(s,m){ return s+(m.income||0); },0):0;
+  const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,Math.min(monthsElapsed,mAct)).reduce(function(s,m){ return s+(m.income||0); },0):0;
   const yoy=(prevYTD>0&&f.income!=null)?Math.round(((f.income||0)-prevYTD)/prevYTD*100):null;
   _wiCache=whatIfData();
   const hotN=_wiCache.deals.filter(function(x){ return x.hot; }).length;
   const hotProj=hotN?whatIfProjection(hotN).total:null;
-  const hotPct=(hotProj!=null&&goal)?Math.min(100,Math.round(hotProj/goal*100)):null;
-  const tile=function(l,v,sub,col,click,marker,spark){ return '<div class="fin-kpi"'+(click?(' style="cursor:pointer" onclick="'+click+'" title="Click to open"'):'')+'><div class="l">'+l+'</div><div class="v"'+(col?(' style="color:'+col+'"'):'')+'>'+v+'</div><div class="m">'+(sub||'')+(click?' · <span style="color:var(--accent);font-weight:800">'+(marker||'see the math')+'</span>':'')+'</div>'+(spark||'')+'</div>'; };
-  const hero=function(l,v,sub,col,click,marker,chart){ return '<div class="fin-hero-t" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="v" style="color:'+col+'">'+v+'</div><div class="m">'+sub+' · <span style="color:var(--accent);font-weight:800">'+marker+'</span></div>'+chart+'</div>'; };
+  const hotPctRaw=(hotProj!=null&&goal)?Math.round(hotProj/goal*100):null; const hotPct=hotPctRaw!=null?Math.min(100,hotPctRaw):null;
+  const chip=function(txt,tone){ const c=tone==="good"?"#3f7d5a":tone==="bad"?"#c1604a":tone==="warn"?"#b07a2a":"#5b7fa6"; return '<span class="fh-chip" style="color:'+c+';background:color-mix(in srgb,'+c+' 12%,transparent)">'+txt+'</span>'; };
+  const hero=function(l,v,ch,cap,col,click,marker){ return '<div class="fin-hero-t" style="border-top:3px solid '+col+'" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="hv"><span class="v" style="color:'+col+'">'+v+'</span>'+(ch||'')+'</div><div class="m">'+cap+' · <span style="color:var(--accent);font-weight:800">'+marker+'</span></div></div>'; };
+  const stat=function(l,v,cap,col,click){ return '<div class="st" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="v" style="color:'+col+'">'+v+'</div><div class="s">'+(cap||'')+'</div></div>'; };
+  const rangeSel='<select class="input" style="margin-left:auto;width:auto;padding:6px 9px;font-size:12px;font-weight:700;flex-shrink:0" onchange="setFinRange(this.value)">'+FIN_RANGES.map(function(o){ return '<option value="'+o[0]+'"'+(_finRange===o[0]?' selected':'')+'>'+o[1]+(o[0]==='ly'&&f.prev&&f.prev.year?(' ('+f.prev.year+')'):'')+'</option>'; }).join("")+'</select>';
+  const monthlyCard='<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">click a month for its transactions</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>'
+    +(months.map(function(mo,i){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer" onclick="openFinMonth('+(mOff+i)+','+(rv.prev?1:0)+')" title="Click for this month\'s transactions"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+' <span style="color:var(--muted);font-size:10px">›</span></span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
+    +'</div>';
+  const cumCard='<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff,rv.prev)+'</div></div>';
+  const tailCards=[cumCard,cashFlowCard(),arCard(),monthlyCard].filter(function(c){ return c&&c!==""; });
+  let tail=""; for(let i2=0;i2<tailCards.length;i2+=2){ tail+=(tailCards[i2+1]!=null)?('<div class="fin-row2">'+tailCards[i2]+tailCards[i2+1]+'</div>'):('<div class="fin-row2" style="grid-template-columns:1fr">'+tailCards[i2]+'</div>'); }
   return ''
-  +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' year-to-date · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')
-    +(yoy!=null?(' · vs '+money(prevYTD)+' this time last year <b style="color:'+(yoy>=0?'#3f7d5a':'#c1604a')+'">'+(yoy>=0?'+':'')+yoy+'%</b>'):'')+'</div>'
+  +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
   +'<div class="fin-hero">'
-  +hero('Cash collected YTD',money(f.income),'actually in the door — from QuickBooks','#3f7d5a','openCollectedMath()','month by month',miniBars(allMonths.map(m=>m.income),'#3f7d5a'))
-  +hero('Booked this year',money(bookedThisYearVal()),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal',miniLine(bookedByMonth(),'#5b7fa6'))
-  +hero('Projected '+y+' income',money(proj.total),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()','see the math',projSegBar(proj.collected,proj.contracted,proj.pipeline,goal))
+  +hero('Cash collected',money(f.income),(yoy!=null?chip((yoy>=0?'+':'')+yoy+'% vs last year',yoy>=0?'good':'bad'):''),'in the door this year, from QuickBooks','#3f7d5a','openCollectedMath()','month by month')
+  +hero('Booked this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal')
+  +hero('Projected '+y+' income',money(proj.total),(goal?chip(projPctRaw+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()','see the math')
   +'</div>'
-  +'<div class="fin-kpis fin-kpis5">'
-  +tile('Contracted rest of year',money(r.backlogYear),'signed, still to collect in '+y,'#D9A05B','openContractedMath()')
-  +tile('Cash in pipeline',money(pipelineOpenVal()),'if you won '+(openN===1?'your 1 open deal':'all '+openN+' open deals')+' · realistically ~'+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()','what this means')
-  +tile('At your close rate',money(pipelineAtCloseVal()),'pipeline × '+Math.round(M.closeRate*100)+'% close · ~'+money(pipelineYearCash())+' lands in '+y,'#5b7fa6','openPipelineMath()')
-  +tile('Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')",'see categories',sparkline(allMonths.map(m=>m.expenses),'#CB6E55'))
-  +tile('Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()','month by month',sparkline(cumVals,'#5b7fa6'))
+  +'<div class="fin-strip">'
+  +stat('Contracted rest of year',money(r.backlogYear),'signed, still to collect','#D9A05B','openContractedMath()')
+  +stat('Cash in pipeline',money(pipelineOpenVal()),'all '+openN+' open · realistically ~'+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()')
+  +stat('At your close rate',money(pipelineAtCloseVal()),'~'+money(pipelineYearCash())+' lands in '+y,'#5b7fa6','openPipelineMath()')
+  +stat('Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')")
+  +stat('Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()')
   +'</div>'
-  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPct+'%</b> · <b>projected '+projPct+'%</b>'+(hotPct!=null?(' · <b style="color:#CB6E55">hot deals in: '+hotPct+'%</b>'):'')+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(projPct>=100?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
+  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPctRaw+'%</b> · <b>projected '+projPctRaw+'%</b>'+(hotPctRaw!=null?(' · <b style="color:#CB6E55">hot deals in: '+hotPctRaw+'%</b>'):'')+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(proj.total>=goal?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
     +'<div style="position:relative;height:14px;background:var(--side);border-radius:8px;overflow:hidden">'
     +'<div style="position:absolute;inset:0;width:'+projPct+'%;background:color-mix(in srgb,#5b7fa6 45%,transparent)"></div>'
     +'<div style="position:absolute;inset:0;width:'+collectedPct+'%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div>'
@@ -6710,21 +6730,15 @@ function finOverviewHtml(f){
     +'<div class="fin-legend" style="justify-content:flex-start;margin-top:6px;flex-wrap:wrap"><span><i style="background:#3f7d5a"></i>Collected</span><span><i style="background:color-mix(in srgb,#5b7fa6 55%,transparent)"></i>Projected</span>'+(hotPct!=null?'<span><i style="background:#CB6E55"></i>If hot deals close</span>':'')+(thisYear?'<span><i style="background:var(--ink);opacity:.5"></i>Today</span>':'')+'</div>'
     +((qboGap!=null&&Math.abs(qboGap)>=Math.max(500,r.recognizedYTD*0.05))?('<div class="rsub" style="margin-top:8px">Reconciliation: QuickBooks shows '+money(f.income)+' collected vs '+money(r.recognizedYTD)+' your contract terms predict — a '+money(Math.abs(qboGap))+' gap. Usually billing timing, un-entered contract terms, or income outside contracts. Check the <b>Contracts</b> tab.</div>'):'')
     +'</div>'):'')
-  +whatIfCard()
-  +smartInsightsCard()
-  +'<div class="fin-filter"><span style="font-size:12px;font-weight:800;color:var(--ink2)">Charts</span><select class="input" style="width:auto;padding:7px 10px;font-size:12.5px;font-weight:700" onchange="setFinRange(this.value)">'+FIN_RANGES.map(function(o){ return '<option value="'+o[0]+'"'+(_finRange===o[0]?' selected':'')+'>'+o[1]+(o[0]==='ly'&&f.prev&&f.prev.year?(' ('+f.prev.year+')'):'')+'</option>'; }).join("")+'</select><span style="font-size:11.5px;color:var(--muted);font-weight:600">click a bar or month for its transactions · click a legend item to hide that series</span></div>'
-  +((rv.prev&&!months.length)?'<div class="rsub" style="margin:-6px 0 12px">Last year\'s numbers arrive with your next <b>Sync from QuickBooks</b> — run a sync and they\'ll show here.</div>':'')
-  +'<div class="fin-row2">'
-  +'<div class="rep-card"><h3>Income vs expenses by month</h3><div class="rsub">'+(rv.prev?('Last year — '+(rv.year||'')):'Where the spread is tight')+'</div><div class="fin-fill">'+finIncExpChart(months,mOff,rv.prev)+'</div></div>'
-  +'<div class="rep-card"><h3>Cumulative net profit</h3><div class="rsub">Money kept, running total across the year</div><div class="fin-fill">'+finCumNetChart(months,baseCum,mOff,rv.prev)+'</div></div>'
+  +scenarioCard()
+  +'<div class="fin-row2 fin-asym2">'
+  +'<div class="rep-card"><div class="rc-head"><div style="min-width:0"><h3 style="margin:0">Income &amp; spending</h3><div class="rsub" style="margin:2px 0 0">'+(rv.prev?('last year — '+(rv.year||'')):'click a bar for its transactions · tap a legend item to hide that series')+'</div></div>'+rangeSel+'</div>'
+  +((rv.prev&&!months.length)?'<div class="rsub" style="margin-top:12px">Last year\'s numbers arrive with your next <b>Sync from QuickBooks</b> — run a sync and they\'ll show here.</div>':('<div class="fin-fill">'+finIncExpChart(months,mOff,rv.prev)+'</div>'))
   +'</div>'
-  +finExtraRow()
-  +'<div class="fin-row2 fin-asym">'
-  +'<div class="rep-card"><h3>Cost breakdown</h3><div class="rsub">Where the money goes</div><div class="fin-fill">'+chartDonut([{label:"Cost of goods",value:Math.max(0,f.cogs||0),color:"#CB6E55"},{label:"Operating expenses",value:Math.max(0,opex!=null?opex:(f.expenses||0)),color:"#D9A05B"},{label:"Net profit kept",value:Math.max(0,f.netProfit||0),color:"#5e8c61"}].filter(function(rr){return rr.value>0;}),money(f.income))+'</div></div>'
-  +'<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">Income · expenses · net — click a month for its transactions</div>'
-  +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>'
-  +(months.map(function(mo,i){ return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer" onclick="openFinMonth('+(mOff+i)+','+(rv.prev?1:0)+')" title="Click for this month\'s transactions"><span style="font-weight:700">'+esc((mo.month||"").slice(0,3))+' <span style="color:var(--muted);font-size:10px">›</span></span><span style="text-align:right;color:var(--ink2)">'+money(mo.income)+'</span><span style="text-align:right;color:var(--ink2)">'+money(mo.expenses)+'</span><span style="text-align:right;font-weight:800;color:'+(mo.netProfit>=0?"#3f7d5a":"#c1604a")+'">'+money(mo.netProfit)+'</span></div>'; }).join("")||'<div class="rsub">No monthly data.</div>')
-  +'</div></div>';
+  +spendDonutCard(f)
+  +'</div>'
+  +smartInsightsCard()
+  +tail;
 }
 function renderFinance(m){
   const f=(state.meta&&state.meta.financials)||null;
