@@ -1552,7 +1552,7 @@
   .fin-hero-t .v{ font-family:var(--disp);font-size:38px;font-weight:800;line-height:1.02 }
   .fh-chip{ font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap }
   .fin-hero-t .m{ font-size:11.5px;color:var(--ink2);font-weight:600;margin-top:7px }
-  .fin-strip{ display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:16px;overflow:hidden }
+  .fin-strip{ display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:16px;overflow:hidden }
   .fin-strip .st{ padding:14px 16px;cursor:pointer;min-width:0;border-left:1px solid var(--line) }
   .fin-strip .st:first-child{ border-left:none }
   .fin-strip .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
@@ -1565,18 +1565,36 @@
   .dnl-row .n{ flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
   .dnl-row .a{ font-weight:800 }
   .dnl-row .ar{ color:var(--muted);font-size:11px }
-  .sc-wrap{ display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap }
-  .sc-left{ flex:1;min-width:260px }
-  .sc-right{ min-width:210px;padding:12px 16px;background:var(--side);border:1px solid var(--line);border-radius:12px }
-  .sc-right .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
-  .sc-right .v{ font-family:var(--disp);font-size:30px;font-weight:800;color:#3f7d5a;margin-top:2px }
-  .sc-right .s{ font-size:11.5px;font-weight:700;color:var(--ink2);margin-top:2px }
-  .sc-right .s2{ font-size:11.5px;font-weight:800;color:#3f7d5a;margin-top:4px }
+  .dealcall-wrap{ display:flex;gap:20px;align-items:stretch;flex-wrap:wrap }
+  .dealcall-main{ flex:1;min-width:260px }
+  .dealcall-side{ min-width:210px;display:flex;flex-direction:column;justify-content:center;padding:14px 18px;background:var(--side);border:1px solid var(--line);border-radius:12px }
+  .dealcall-side .l{ font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
+  .dealcall-side .v{ font-family:var(--disp);font-size:30px;font-weight:800;color:#3f7d5a;margin-top:2px }
+  .dealcall-side .s{ font-size:11.5px;font-weight:700;color:var(--ink2);margin-top:2px }
+  .dealcall-side .s2{ font-size:11.5px;font-weight:800;color:#3f7d5a;margin-top:4px }
+  .gbar-head{ display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px }
+  .gbar-lbl{ font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
+  .gbar-big{ font-family:var(--disp);font-size:30px;font-weight:800;color:var(--ink);line-height:1.05;margin-top:2px }
+  .gbar-pct{ font-family:var(--font);font-size:13px;font-weight:700;color:var(--ink2);margin-left:4px }
+  .gbar-pill{ margin-left:auto;font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;align-self:center;white-space:nowrap }
+  .gbar-track{ position:relative;height:34px;background:var(--side);border-radius:10px;overflow:hidden }
+  .gbar-fill{ position:absolute;top:0;bottom:0;left:0;transform-origin:left center;animation:gbarGrow .8s cubic-bezier(.22,.61,.36,1) both }
+  .gbar-proj{ background:color-mix(in srgb,#5b7fa6 40%,transparent) }
+  .gbar-coll{ background:linear-gradient(90deg,#5e8c61,#3f7d5a) }
+  .gbar-vlabel{ position:absolute;top:50%;transform:translateY(-50%);font-size:12px;font-weight:800;color:#fff;white-space:nowrap;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.45);animation:gbarFade .4s ease-out .55s both }
+  .gbar-vcoll{ left:11px }
+  .gbar-vproj{ transform:translate(-100%,-50%);padding-right:10px }
+  .gbar-goaltick{ position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.7 }
+  .gbar-todaytick{ position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.5 }
+  .gbar-scale{ display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--ink2);flex-wrap:wrap;gap:6px }
+  @keyframes gbarGrow{ from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
+  @keyframes gbarFade{ from{ opacity:0 } to{ opacity:1 } }
+  @media(max-width:620px){ .gbar-vproj{ display:none } .gbar-big{ font-size:26px } }
   .wi-chips{ display:flex;flex-wrap:wrap;gap:7px;margin-top:10px }
   .wi-chip{ border:1.5px solid var(--line2);background:var(--surface);color:var(--ink2);font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
   .wi-chip.hot{ border-color:#CB6E55;color:#CB6E55;background:color-mix(in srgb,#CB6E55 10%,transparent) }
   @media(max-width:1100px){ .fin-hero{ grid-template-columns:1fr 1fr } }
-  @media(min-width:721px) and (max-width:1100px){ .fin-strip{ grid-template-columns:repeat(3,1fr) } .fin-strip .st{ border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+3){ border-top:none } .fin-strip .st:nth-child(3n+1){ border-left:none } }
+  @media(min-width:721px) and (max-width:1100px){ .fin-strip{ grid-template-columns:repeat(2,1fr) } .fin-strip .st{ border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+2){ border-top:none } .fin-strip .st:nth-child(2n+1){ border-left:none } }
   @media(max-width:960px){ .fin-asym2{ grid-template-columns:1fr } }
   @media(max-width:900px){ .fin-hero{ grid-template-columns:1fr } }
   @media(max-width:720px){ .fin-strip{ grid-template-columns:1fr 1fr } .fin-strip .st{ border-left:none;border-top:1px solid var(--line) } .fin-strip .st:nth-child(-n+2){ border-top:none } .fin-hero-t .v{ font-size:31px } }
@@ -6348,9 +6366,14 @@ function dealYearCashIfWon(l){ const now=new Date(); const y=now.getFullYear(), 
   return dealRevenueYear(Object.assign({},l,{startDate:sd}),y,cm).remainingThisYear;
 }
 function pipelineYearCash(){ const M=salesMath(); return Math.round((state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).reduce(function(s,l){ return s+dealYearCashIfWon(l); },0)*M.closeRate); }
+/* Hot deals = the ones you've personally flagged (🔥) as likely to close. They are
+   the ONLY pipeline that feeds the projection — no automatic close-rate estimate. */
+function hotDealsList(){ return (state.pipeline||[]).filter(function(l){ return ACTIVE_STAGES.includes(l.stage)&&l.heat; }); }
+function hotDealsValue(){ return hotDealsList().reduce(function(s,l){ return s+(l.contractValue||0); },0); }
+function hotDealsCash(){ return Math.round(hotDealsList().reduce(function(s,l){ return s+dealYearCashIfWon(l); },0)); }
 function yearProjection(){ const f=(state.meta&&state.meta.financials)||{}; const r=contractRecon();
-  const collected=Math.round(f.income||0), contracted=r.backlogYear, pipe=pipelineYearCash();
-  return {collected:collected, contracted:contracted, pipeline:pipe, total:collected+contracted+pipe}; }
+  const collected=Math.round(f.income||0), contracted=r.backlogYear, hot=hotDealsCash();
+  return {collected:collected, contracted:contracted, hot:hot, total:collected+contracted+hot}; }
 function openContractedMath(){
   const now=new Date(); const y=now.getFullYear(), cm=now.getMonth();
   const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
@@ -6363,15 +6386,15 @@ function openContractedMath(){
   $("#drawerFoot").innerHTML="";
 }
 function openProjectionMath(){
-  const p=yearProjection(); const M=salesMath();
+  const p=yearProjection(); const y=new Date().getFullYear(); const hot=hotDealsList();
   const line=function(l,v,s){ return '<div style="padding:9px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px"><span>'+l+'</span><span>'+money(v)+'</span></div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+s+'</div></div>'; };
   openDrawer("Projected income this year — the math");
-  $("#drawerBody").innerHTML='<div class="mi-hint">Three parts, added up. No magic — each one is checkable.</div>'
-    +line("Cash collected so far",p.collected,"straight from QuickBooks")
-    +line("+ Contracted rest of year",p.contracted,"signed contracts × months remaining — see it per-deal from the Contracted tile")
-    +line("+ Pipeline cash landing this year",p.pipeline,money(pipelineOpenVal())+" open × "+Math.round(M.closeRate*100)+"% close = "+money(pipelineAtCloseVal())+" sold — but a retainer won mid-year only pays its remaining months, so "+money(p.pipeline)+" of cash lands in "+new Date().getFullYear()+". Tap tile 3 for the deal-by-deal view.")
-    +'<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:800;font-size:16px"><span>Projected '+new Date().getFullYear()+' income</span><span style="color:#3f7d5a">'+money(p.total)+'</span></div>'
-    +'<div class="rsub">Pipeline deals with no start date are assumed to start next month if won. Set billing, monthly, and start date on each lead card to sharpen this.</div>';
+  $("#drawerBody").innerHTML='<div class="mi-hint">Three parts, added up. No close-rate guessing — only deals you personally flag count, so this number is yours to control.</div>'
+    +line("Cash collected so far",p.collected,"straight from QuickBooks — already includes payments on prior-year contracts")
+    +line("+ Contracted rest of year",p.contracted,"signed contracts × the months still to collect in "+y+" — future cash, not yet in the collected number, so nothing is double-counted")
+    +line("+ Your hot deals",p.hot,hot.length?(hot.length+" deal"+(hot.length===1?"":"s")+" you flagged 🔥, counted at the cash that would land in "+y+" if won"):"none flagged yet — tap deals in “Your call” below to add them")
+    +'<div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:800;font-size:16px"><span>Projected '+y+' income</span><span style="color:#3f7d5a">'+money(p.total)+'</span></div>'
+    +'<div class="rsub">A retainer flagged mid-year only adds its remaining months. Set billing, monthly, and start date on each lead card to sharpen the hot-deal figure.</div>';
   $("#drawerFoot").innerHTML="";
 }
 let _catCache=[];
@@ -6444,23 +6467,22 @@ function openFinMonth(i,p){ i=+i; const f=(state.meta&&state.meta.financials)||{
 }
 function openPipelineMath(){
   const open=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage));
-  const M=salesMath(); const y=new Date().getFullYear();
-  const total=pipelineOpenVal(), weighted=pipelineWeightedVal(), atClose=pipelineAtCloseVal();
+  const y=new Date().getFullYear();
+  const total=pipelineOpenVal(), weighted=pipelineWeightedVal();
+  const hotV=hotDealsValue(), hotC=hotDealsCash(), hotN=hotDealsList().length;
   const cashAll=open.reduce(function(s,l){ return s+dealYearCashIfWon(l); },0);
-  const cashClose=pipelineYearCash();
   const zero=open.filter(function(l){ const st=STAGES.find(x=>x.key===l.stage); return !(st&&st.prob>0); });
   const zeroStages=[...new Set(zero.map(function(l){ const st=STAGES.find(x=>x.key===l.stage); return (st&&st.label)||l.stage; }))];
-  const rows=open.map(function(l){ const st=STAGES.find(x=>x.key===l.stage)||{}; const p=Math.round((st.prob||0)*100); return {l:l,st:st,p:p,w:Math.round((l.contractValue||0)*(st.prob||0)),c:dealYearCashIfWon(l)}; }).sort((a,b)=>(b.l.contractValue||0)-(a.l.contractValue||0));
+  const rows=open.map(function(l){ const st=STAGES.find(x=>x.key===l.stage)||{}; const p=Math.round((st.prob||0)*100); return {l:l,st:st,p:p,w:Math.round((l.contractValue||0)*(st.prob||0)),c:dealYearCashIfWon(l),hot:!!l.heat}; }).sort((a,b)=>(b.hot-a.hot)||((b.l.contractValue||0)-(a.l.contractValue||0)));
   openDrawer("Cash in pipeline — what these numbers mean");
-  $("#drawerBody").innerHTML='<div class="mi-hint">You have '+open.length+' open deal'+(open.length===1?'':'s')+' worth <b>'+money(total)+'</b> if you won every single one. Three honest ways to shrink that down to reality:</div>'
-    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Weighted by stage → '+money(weighted)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Each deal counts only part of its value based on how far along it is — a deal at a 60% stage counts 60% of its value; a brand-new lead barely counts.</div>'
-    +(zero.length?('<div style="font-size:12px;color:#c1604a;font-weight:700;margin-top:5px">'+zero.length+' deal'+(zero.length===1?'':'s')+' sit'+(zero.length===1?'s':'')+' in '+zeroStages.map(esc).join(" / ")+' — a stage with <b>0% win odds</b> — so they count $0 here. Give each stage real odds in Settings → Statuses &amp; stages.</div>'):'')
+  $("#drawerBody").innerHTML='<div class="mi-hint">You have '+open.length+' open deal'+(open.length===1?'':'s')+' worth <b>'+money(total)+'</b> if you won every single one. Two ways to read that:</div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Weighted by stage → '+money(weighted)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Each deal counted by how far along it is — a deal at a 60% stage counts 60% of its value; a brand-new lead barely counts. A useful gut-check on the whole pipeline, but it does <b>not</b> feed your projection.</div>'
+    +(zero.length?('<div style="font-size:12px;color:#c1604a;font-weight:700;margin-top:5px">'+zero.length+' deal'+(zero.length===1?'':'s')+' sit'+(zero.length===1?'s':'')+' in '+zeroStages.map(esc).join(" / ")+' — a stage with <b>0% win odds</b> — so they weight to $0. Give each stage real odds in Settings → Statuses &amp; stages.</div>'):'')
     +'</div>'
-    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#5b7fa6">Sold, at your close rate → '+money(atClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+money(total)+' × the '+Math.round(M.closeRate*100)+'% of decided deals you historically win'+(M.closeOverride?' (your override)':'')+'. That\'s contract value you\'d <b>sell</b> — not cash this year.</div></div>'
-    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#D9A05B">Cash that lands in '+y+' → '+money(cashClose)+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">Winning isn\'t the same as collecting this year: a retainer only pays its monthly amount for the months left in '+y+', while a paid-in-full deal pays everything at once. Won all, these deals would put '+money(cashAll)+' into '+y+' — × your close rate = <b>'+money(cashClose)+'</b>, which is what feeds your year projection. Each deal\'s billing, monthly, and start date live on its lead card; no start date means it\'s assumed to start next month.</div></div>'
+    +'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="font-weight:800;font-size:13.5px;color:#CB6E55">Your hot picks → '+money(hotV)+(hotN?'':' (none yet)')+'</div><div style="font-size:12px;color:var(--ink2);margin-top:2px">'+(hotN?('The '+hotN+' deal'+(hotN===1?'':'s')+' you flagged 🔥. These — and only these — are added to your projected income, at <b>'+money(hotC)+'</b> of cash landing in '+y+'.'):'Flag the deals you believe in under “Your call” below. Only flagged deals are added to your projection — no automatic estimate.')+'</div></div>'
     +'<div class="rsub" style="margin:12px 0 4px;font-weight:800;color:var(--ink)">Deal by deal — value · stage · weighted · '+y+' cash if won</div>'
-    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap"><span style="flex:1;min-width:110px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(x.st.label||x.l.stage||"")+' · '+x.p+'%</span><span style="font-weight:700;color:var(--ink2)">'+money(x.l.contractValue||0)+'</span><span style="font-weight:800;color:#5b7fa6;min-width:56px;text-align:right">'+money(x.w)+'</span><span style="font-weight:800;color:#D9A05B;min-width:56px;text-align:right">'+money(x.c)+'</span></div>').join("")||'<div class="empty-mini">No open deals right now.</div>')
-    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px;gap:8px;flex-wrap:wrap"><span>All open</span><span>'+money(total)+' · <span style="color:#5b7fa6">'+money(weighted)+'</span> · <span style="color:#D9A05B">'+money(cashAll)+'</span></span></div>';
+    +(rows.map(x=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap"><span style="flex:1;min-width:110px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(x.hot?'🔥 ':'')+esc(x.l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+esc(x.st.label||x.l.stage||"")+' · '+x.p+'%</span><span style="font-weight:700;color:var(--ink2)">'+money(x.l.contractValue||0)+'</span><span style="font-weight:800;color:#5b7fa6;min-width:56px;text-align:right">'+money(x.w)+'</span><span style="font-weight:800;color:#D9A05B;min-width:56px;text-align:right">'+money(x.c)+'</span></div>').join("")||'<div class="empty-mini">No open deals right now.</div>')
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px;gap:8px;flex-wrap:wrap"><span>All open</span><span>'+money(total)+' · <span style="color:#5b7fa6">'+money(weighted)+'</span> weighted · <span style="color:#D9A05B">'+money(cashAll)+'</span> cash if all won</span></div>';
   $("#drawerFoot").innerHTML="";
 }
 function openBookedList(){
@@ -6495,32 +6517,34 @@ function openNetMath(){
 function kfmt(v){ v=Math.round(+v||0); const a=Math.abs(v); if(a<1000)return '$'+v; let k=v/1000; k=(a>=10000)?Math.round(k):Math.round(k*10)/10; return '$'+k+'k'; }
 function toggleHeat(id){ const l=(state.pipeline||[]).find(x=>x.id===id); if(!l)return; if(l.heat)delete l.heat; else l.heat=true; save(); if(view==="finance")renderFinance($("#main")); }
 let _wiCache=null;
-function whatIfData(){ const M=salesMath(); const f=(state.meta&&state.meta.financials)||{}; const r=contractRecon();
+function whatIfData(){ const f=(state.meta&&state.meta.financials)||{}; const r=contractRecon();
   const deals=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage))
     .map(function(l){ const st=STAGES.find(s=>s.key===l.stage)||{}; return {id:l.id,name:l.name||"(unnamed)",hot:!!l.heat,cash:dealYearCashIfWon(l),value:l.contractValue||0,prob:st.prob||0,stage:st.label||l.stage}; })
     .sort(function(a,b){ return (b.hot-a.hot)||(b.prob-a.prob)||(b.value-a.value); });
-  return {deals:deals,base:Math.round(f.income||0)+r.backlogYear,closeRate:M.closeRate,goal:(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0)};
+  return {deals:deals,base:Math.round(f.income||0)+r.backlogYear,goal:(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0)};
 }
+// Projection with the first k (hot-first-sorted) deals counted in full, the rest at $0.
 function whatIfProjection(k){ const d=_wiCache||(_wiCache=whatIfData()); k=Math.max(0,Math.min(d.deals.length,Math.round(+k||0)));
   const sel=d.deals.slice(0,k);
   const selCash=sel.reduce(function(s,x){ return s+x.cash; },0);
-  const restCash=d.deals.slice(k).reduce(function(s,x){ return s+x.cash; },0);
-  return {total:Math.round(d.base+selCash+d.closeRate*restCash),selCash:selCash,selValue:sel.reduce(function(s,x){ return s+x.value; },0),k:k,n:d.deals.length};
+  return {total:Math.round(d.base+selCash),selCash:selCash,selValue:sel.reduce(function(s,x){ return s+x.value; },0),k:k,n:d.deals.length};
 }
 function scenarioCard(){
   _wiCache=whatIfData(); const d=_wiCache;
   const show=d.deals.filter(function(x){ return x.value>0||x.hot; });
   if(!show.length)return "";
-  const hotN=d.deals.filter(function(x){ return x.hot; }).length;
-  const p=whatIfProjection(hotN), base=whatIfProjection(0).total;
+  const hot=d.deals.filter(function(x){ return x.hot; });
+  const hotVal=hot.reduce(function(s,x){ return s+x.value; },0);
+  const hotCash=hot.reduce(function(s,x){ return s+x.cash; },0);
+  const pipeVal=pipelineOpenVal();
   const chips=show.map(function(x){ return '<button class="wi-chip'+(x.hot?" hot":"")+'" onclick="toggleHeat(\''+x.id+'\')" title="'+esc(x.stage)+' · '+money(x.cash)+' would land this year — tap to '+(x.hot?'unmark':'mark hot')+'">'+(x.hot?"🔥 ":"")+esc(x.name)+' · '+money(x.value)+'</button>'; }).join("");
-  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div class="sc-wrap">'
-    +'<div class="sc-left"><h3 style="margin:0">Your call — if these deals close</h3>'
-    +'<div class="rsub" style="margin:4px 0 0">Tap the deals you feel good about. 🔥 deals count in full on top of collected + contracted; the rest stay at your '+Math.round(d.closeRate*100)+'% close rate. Your picks are saved and shown on the goal bar.</div>'
+  return '<div class="rep-card rep-full" style="margin-bottom:16px"><div class="dealcall-wrap">'
+    +'<div class="dealcall-main"><h3 style="margin:0">Your call — the deals you believe in</h3>'
+    +'<div class="rsub" style="margin:4px 0 0">Tap the ones you feel good about. 🔥 deals are the only pipeline added to your projected income — counted in full, no close-rate guessing. Your picks are saved.</div>'
     +'<div class="wi-chips">'+chips+'</div></div>'
-    +'<div class="sc-right">'+(hotN
-      ?('<div class="l">With your '+hotN+' hot deal'+(hotN===1?'':'s')+'</div><div class="v">'+money(p.total)+'</div>'+(d.goal?('<div class="s">'+Math.round(p.total/d.goal*100)+'% of your '+money(d.goal)+' goal</div>'):'')+'<div class="s2">+'+money(p.total-base)+' vs the base projection</div>')
-      :('<div class="l">Nothing marked yet</div><div class="v" style="color:var(--ink2)">'+money(base)+'</div><div class="s">your base projection — tap a deal to see it move</div>'))
+    +'<div class="dealcall-side">'+(hot.length
+      ?('<div class="l">'+hot.length+' deal'+(hot.length===1?'':'s')+' you\'re counting on</div><div class="v">'+money(hotVal)+'</div><div class="s">of '+money(pipeVal)+' in the pipeline</div><div class="s2">+'+money(hotCash)+' to projected income this year</div>')
+      :('<div class="l">Nothing flagged yet</div><div class="v" style="color:var(--ink2)">'+money(pipeVal)+'</div><div class="s">total pipeline — tap the deals you believe in to fold them into your projection</div>'))
     +'</div></div></div>';
 }
 function openAllInsights(){ const list=(typeof finInsightsList==="function")?finInsightsList():[];
@@ -6554,6 +6578,37 @@ function spendDonutCard(f){
     +'<div style="display:flex;justify-content:center;margin:10px 0 6px"><svg viewBox="0 0 140 140" style="width:132px;height:132px"><g>'+segs+'</g><text x="70" y="66" style="font-size:15px;font-weight:800;fill:var(--ink);text-anchor:middle">'+kfmt(f.expenses||0)+'</text><text x="70" y="82" style="font-size:9.5px;fill:var(--muted);text-anchor:middle;font-weight:700">spent YTD</text></svg></div>'
     +legend+'</div>';
 }
+function goalBarCard(f,proj,goal,pace,thisYear,r){
+  if(!goal)return "";
+  const y=f.year||new Date().getFullYear();
+  const collected=Math.round(f.income||0), projected=proj.total;
+  const maxV=Math.max(goal,projected,collected,1);
+  const pc=function(v){ return Math.max(0,Math.min(100,v/maxV*100)); };
+  const collW=pc(collected), projW=pc(projected), goalL=pc(goal);
+  const projPctGoal=Math.round(projected/goal*100), collPctGoal=Math.round(collected/goal*100);
+  const clears=projected>=goal;
+  const pill=clears
+    ?'<span class="gbar-pill" style="color:#3f7d5a;background:color-mix(in srgb,#3f7d5a 14%,transparent)">on track to clear your goal</span>'
+    :'<span class="gbar-pill" style="color:#b07a2a;background:color-mix(in srgb,#b07a2a 14%,transparent)">'+money(goal-projected)+' to go</span>';
+  const projLabelLeft=Math.max(projW,24);
+  const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
+  const recon=(qboGap!=null&&qboGap>=Math.max(500,r.recognizedYTD*0.05))
+    ?'<div class="rsub" style="margin-top:12px">Why collected is higher than your '+y+' contracts predict: some is cash from <b>prior-year contracts</b> still paying out, and <b>installment closeouts</b> not yet entered as '+y+' contracts — real income, just not tied to a '+y+' deal. Your projection is built on the actual collected number, so it is <b>not</b> double-counted.</div>'
+    :'';
+  return '<div class="rep-card rep-full gbar-card" style="margin-bottom:16px">'
+    +'<div class="gbar-head"><div style="min-width:0"><div class="gbar-lbl">Projected '+y+' income vs goal</div>'
+      +'<div class="gbar-big">'+money(projected)+' <span class="gbar-pct">'+projPctGoal+'% of your '+money(goal)+' goal</span></div></div>'+pill+'</div>'
+    +'<div class="gbar-track">'
+      +'<div class="gbar-fill gbar-proj" style="width:'+projW.toFixed(1)+'%"></div>'
+      +'<div class="gbar-fill gbar-coll" style="width:'+collW.toFixed(1)+'%"></div>'
+      +'<span class="gbar-vlabel gbar-vcoll">'+kfmt(collected)+' collected</span>'
+      +'<span class="gbar-vlabel gbar-vproj" style="left:'+projLabelLeft.toFixed(1)+'%">'+kfmt(projected)+' projected</span>'
+      +'<div class="gbar-goaltick" style="left:'+goalL.toFixed(1)+'%" title="Goal '+money(goal)+'"></div>'
+      +(thisYear?'<div class="gbar-todaytick" style="left:'+pace.toFixed(1)+'%" title="Today"></div>':'')
+    +'</div>'
+    +'<div class="gbar-scale"><span>collected <b style="color:#3f7d5a">'+money(collected)+'</b> · '+collPctGoal+'% of goal</span><span>goal <b>'+money(goal)+'</b>'+(thisYear?' · today marks '+Math.round(pace)+'% of the year':'')+'</span></div>'
+    +recon+'</div>';
+}
 function finOverviewHtml(f){
   const now=new Date(); const y=now.getFullYear();
   const monthsElapsed=(f.year&&f.year===y)?(now.getMonth()+1):12;
@@ -6566,24 +6621,24 @@ function finOverviewHtml(f){
   const mAct=allMonths.length||monthsElapsed;
   const avgBurn=(f.expenses!=null)?Math.round(f.expenses/mAct):null;
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
-  const r=contractRecon(); const proj=yearProjection(); const M=salesMath();
+  const r=contractRecon(); const proj=yearProjection();
   const when=f.syncedAt?new Date(f.syncedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-  const collectedPctRaw=goal?Math.round((f.income||0)/goal*100):0; const collectedPct=Math.min(100,collectedPctRaw);
-  const projPctRaw=goal?Math.round(proj.total/goal*100):0; const projPct=Math.min(100,projPctRaw);
-  const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
   const openN=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).length;
   const wonN=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).length;
   const thisYear=(!f.year||f.year===y);
   const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
   const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,Math.min(monthsElapsed,mAct)).reduce(function(s,m){ return s+(m.income||0); },0):0;
   const yoy=(prevYTD>0&&f.income!=null)?Math.round(((f.income||0)-prevYTD)/prevYTD*100):null;
-  _wiCache=whatIfData();
-  const hotN=_wiCache.deals.filter(function(x){ return x.hot; }).length;
-  const hotProj=hotN?whatIfProjection(hotN).total:null;
-  const hotPctRaw=(hotProj!=null&&goal)?Math.round(hotProj/goal*100):null; const hotPct=hotPctRaw!=null?Math.min(100,hotPctRaw):null;
+  const projPctGoal=goal?Math.round(proj.total/goal*100):null;
   const chip=function(txt,tone){ const c=tone==="good"?"#3f7d5a":tone==="bad"?"#c1604a":tone==="warn"?"#b07a2a":"#5b7fa6"; return '<span class="fh-chip" style="color:'+c+';background:color-mix(in srgb,'+c+' 12%,transparent)">'+txt+'</span>'; };
-  const hero=function(l,v,ch,cap,col,click,marker){ return '<div class="fin-hero-t" style="border-top:3px solid '+col+'" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="hv"><span class="v" style="color:'+col+'">'+v+'</span>'+(ch||'')+'</div><div class="m">'+cap+' · <span style="color:var(--accent);font-weight:800">'+marker+'</span></div></div>'; };
+  const hero=function(l,v,ch,cap,col,click,marker){ return '<div class="fin-hero-t" style="border-top:3px solid '+col+'" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="hv"><span class="v" style="color:'+col+'">'+v+'</span>'+(ch||'')+'</div><div class="m">'+(cap?cap+' · ':'')+'<span style="color:var(--accent);font-weight:800">'+marker+'</span></div></div>'; };
   const stat=function(l,v,cap,col,click){ return '<div class="st" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="v" style="color:'+col+'">'+v+'</div><div class="s">'+(cap||'')+'</div></div>'; };
+  const stats=[
+    stat('Contracted rest of year',money(r.backlogYear),'signed, still to collect','#D9A05B','openContractedMath()'),
+    stat('Cash in pipeline',money(pipelineOpenVal()),'weighted '+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()'),
+    stat('Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')"),
+    stat('Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()')
+  ];
   const rangeSel='<select class="input" style="margin-left:auto;width:auto;padding:6px 9px;font-size:12px;font-weight:700;flex-shrink:0" onchange="setFinRange(this.value)">'+FIN_RANGES.map(function(o){ return '<option value="'+o[0]+'"'+(_finRange===o[0]?' selected':'')+'>'+o[1]+(o[0]==='ly'&&f.prev&&f.prev.year?(' ('+f.prev.year+')'):'')+'</option>'; }).join("")+'</select>';
   const monthlyCard='<div class="rep-card"><h3>Monthly detail</h3><div class="rsub">click a month for its transactions</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-bottom:2px;margin-top:6px"><span>Month</span><span style="text-align:right">Income</span><span style="text-align:right">Expenses</span><span style="text-align:right">Net</span></div>'
@@ -6595,27 +6650,12 @@ function finOverviewHtml(f){
   return ''
   +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
   +'<div class="fin-hero">'
-  +hero('Cash collected',money(f.income),(yoy!=null?chip((yoy>=0?'+':'')+yoy+'% vs last year',yoy>=0?'good':'bad'):''),'in the door this year, from QuickBooks','#3f7d5a','openCollectedMath()','month by month')
-  +hero('Booked this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'gross contract value signed in '+y,'#5b7fa6','openBookedList()','every deal')
-  +hero('Projected '+y+' income',money(proj.total),(goal?chip(projPctRaw+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + pipeline cash','#3f7d5a','openProjectionMath()','see the math')
+  +hero('Cash collected',money(f.income),(yoy!=null?chip((yoy>=0?'+':'')+yoy+'% vs last year',yoy>=0?'good':'bad'):''),'','#3f7d5a','openCollectedMath()','month by month')
+  +hero('Booked this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'','#5b7fa6','openBookedList()','every deal')
+  +hero('Projected '+y+' income',money(proj.total),(projPctGoal!=null?chip(projPctGoal+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + hot deals','#3f7d5a','openProjectionMath()','see the math')
   +'</div>'
-  +'<div class="fin-strip">'
-  +stat('Contracted rest of year',money(r.backlogYear),'signed, still to collect','#D9A05B','openContractedMath()')
-  +stat('Cash in pipeline',money(pipelineOpenVal()),'all '+openN+' open · realistically ~'+money(pipelineWeightedVal()),'#5b7fa6','openPipelineMath()')
-  +stat('At your close rate',money(pipelineAtCloseVal()),'~'+money(pipelineYearCash())+' lands in '+y,'#5b7fa6','openPipelineMath()')
-  +stat('Spending YTD',money(f.expenses),avgBurn!=null?('~'+money(avgBurn)+'/mo average'):'','#CB6E55',"setFinanceTab('costs')")
-  +stat('Net profit YTD',money(f.netProfit),margin+'% margin',(f.netProfit==null||f.netProfit>=0)?'#3f7d5a':'#c1604a','openNetMath()')
-  +'</div>'
-  +(goal?('<div class="rep-card rep-full" style="margin-bottom:16px"><div class="rsub" style="margin:0 0 6px">Toward your '+money(goal)+' goal — <b>collected '+collectedPctRaw+'%</b> · <b>projected '+projPctRaw+'%</b>'+(hotPctRaw!=null?(' · <b style="color:#CB6E55">hot deals in: '+hotPctRaw+'%</b>'):'')+(thisYear?(' · '+pace+'% of the year gone'+(collectedPct>=pace?' — <b style="color:#3f7d5a">ahead of pace</b>':(proj.total>=goal?' — behind on cash, but the projection still clears the goal':' — <b style="color:#c1604a">behind pace</b>'))):'')+'</div>'
-    +'<div style="position:relative;height:14px;background:var(--side);border-radius:8px;overflow:hidden">'
-    +'<div style="position:absolute;inset:0;width:'+projPct+'%;background:color-mix(in srgb,#5b7fa6 45%,transparent)"></div>'
-    +'<div style="position:absolute;inset:0;width:'+collectedPct+'%;background:linear-gradient(90deg,#5e8c61,#3f7d5a);border-radius:8px"></div>'
-    +(hotPct!=null?('<div class="goal-pace" style="left:'+hotPct+'%;background:#CB6E55;opacity:.9" title="If your hot deals close"></div>'):'')
-    +(thisYear?('<div class="goal-pace" style="left:'+pace+'%" title="Today — '+pace+'% of the year gone"></div>'):'')
-    +'</div>'
-    +'<div class="fin-legend" style="justify-content:flex-start;margin-top:6px;flex-wrap:wrap"><span><i style="background:#3f7d5a"></i>Collected</span><span><i style="background:color-mix(in srgb,#5b7fa6 55%,transparent)"></i>Projected</span>'+(hotPct!=null?'<span><i style="background:#CB6E55"></i>If hot deals close</span>':'')+(thisYear?'<span><i style="background:var(--ink);opacity:.5"></i>Today</span>':'')+'</div>'
-    +((qboGap!=null&&Math.abs(qboGap)>=Math.max(500,r.recognizedYTD*0.05))?('<div class="rsub" style="margin-top:8px">Reconciliation: QuickBooks shows '+money(f.income)+' collected vs '+money(r.recognizedYTD)+' your contract terms predict — a '+money(Math.abs(qboGap))+' gap. Usually billing timing, un-entered contract terms, or income outside contracts. Check the <b>Contracts</b> tab.</div>'):'')
-    +'</div>'):'')
+  +'<div class="fin-strip">'+stats.join("")+'</div>'
+  +goalBarCard(f,proj,goal,pace,thisYear,r)
   +scenarioCard()
   +'<div class="fin-row2 fin-asym2">'
   +'<div class="rep-card"><div class="rc-head"><div style="min-width:0"><h3 style="margin:0">Income &amp; spending</h3><div class="rsub" style="margin:2px 0 0">'+(rv.prev?('last year — '+(rv.year||'')):'click a bar for its transactions · tap a legend item to hide that series')+'</div></div>'+rangeSel+'</div>'
