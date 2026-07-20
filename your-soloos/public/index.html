@@ -1463,6 +1463,8 @@
   .leg-btn.off{ opacity:.35;filter:grayscale(1);text-decoration:line-through }
   .goal-pace{ position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5 }
   .fin-hero{ display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px }
+  .fin-hero2{ grid-template-columns:repeat(2,1fr) }
+  @media(max-width:620px){ .gbar-big{ font-size:26px } }
   .fin-hero-t{ background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;cursor:pointer;min-width:0 }
   .fin-hero-t .l{ font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted) }
   .fin-hero-t .hv{ display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px }
@@ -1494,19 +1496,6 @@
   .gbar-big{ font-family:var(--disp);font-size:30px;font-weight:800;color:var(--ink);line-height:1.05;margin-top:2px }
   .gbar-pct{ font-family:var(--font);font-size:13px;font-weight:700;color:var(--ink2);margin-left:4px }
   .gbar-pill{ margin-left:auto;font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;align-self:center;white-space:nowrap }
-  .gbar-track{ position:relative;height:34px;background:var(--side);border-radius:10px;overflow:hidden }
-  .gbar-fill{ position:absolute;top:0;bottom:0;left:0;transform-origin:left center;animation:gbarGrow .8s cubic-bezier(.22,.61,.36,1) both }
-  .gbar-proj{ background:color-mix(in srgb,#5b7fa6 40%,transparent) }
-  .gbar-coll{ background:linear-gradient(90deg,#5e8c61,#3f7d5a) }
-  .gbar-vlabel{ position:absolute;top:50%;transform:translateY(-50%);font-size:12px;font-weight:800;color:#fff;white-space:nowrap;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.45);animation:gbarFade .4s ease-out .55s both }
-  .gbar-vcoll{ left:11px }
-  .gbar-vproj{ transform:translate(-100%,-50%);padding-right:10px }
-  .gbar-goaltick{ position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.7 }
-  .gbar-todaytick{ position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.5 }
-  .gbar-scale{ display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--ink2);flex-wrap:wrap;gap:6px }
-  @keyframes gbarGrow{ from{ transform:scaleX(0) } to{ transform:scaleX(1) } }
-  @keyframes gbarFade{ from{ opacity:0 } to{ opacity:1 } }
-  @media(max-width:620px){ .gbar-vproj{ display:none } .gbar-big{ font-size:26px } }
   .wi-chips{ display:flex;flex-wrap:wrap;gap:7px;margin-top:10px }
   .wi-chip{ border:1.5px solid var(--line2);background:var(--surface);color:var(--ink2);font:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
   .wi-chip.hot{ border-color:#CB6E55;color:#CB6E55;background:color-mix(in srgb,#CB6E55 10%,transparent) }
@@ -6488,10 +6477,10 @@ function openBookedList(){
   const won=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).sort((a,b)=>(b.contractValue||0)-(a.contractValue||0));
   const total=won.reduce((s,l)=>s+(l.contractValue||0),0);
   const bl=function(l){ const b=dealBilling(l); return b==="recurring"?(money(Math.round(dealMonthly(l)))+"/mo"):b==="installments"?"installments":"paid in full"; };
-  openDrawer("Booked in "+y+" — every deal");
-  $("#drawerBody").innerHTML='<div class="mi-hint">The full contract value of every deal you closed this year — what you <b>sold</b>, regardless of when the cash actually arrives. Tile 1 is what\'s arrived; tile 2 is what\'s still coming.</div>'
+  openDrawer("Sold in "+y+" — every deal");
+  $("#drawerBody").innerHTML='<div class="mi-hint">The full contract value of every deal you closed this year — what you <b>sold</b>, regardless of when the cash actually arrives. Cash collected is what has arrived; contracted rest of year is what is still coming.</div>'
     +(won.map(l=>'<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.name||"")+'</span><span style="font-size:11.5px;color:var(--ink2);font-weight:700">'+bl(l)+'</span><span style="font-weight:800;color:#5b7fa6">'+money(l.contractValue||0)+'</span></div>').join("")||'<div class="empty-mini">Nothing booked yet this year.</div>')
-    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Booked this year</span><span style="color:#5b7fa6">'+money(total)+'</span></div>';
+    +'<div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:800;font-size:14px"><span>Sold this year</span><span style="color:#5b7fa6">'+money(total)+'</span></div>';
   $("#drawerFoot").innerHTML="";
 }
 function openCollectedMath(){
@@ -6576,37 +6565,74 @@ function spendDonutCard(f){
     +'<div style="display:flex;justify-content:center;margin:10px 0 6px"><svg viewBox="0 0 140 140" style="width:132px;height:132px"><g>'+segs+'</g><text x="70" y="66" style="font-size:15px;font-weight:800;fill:var(--ink);text-anchor:middle">'+kfmt(f.expenses||0)+'</text><text x="70" y="82" style="font-size:9.5px;fill:var(--muted);text-anchor:middle;font-weight:700">spent YTD</text></svg></div>'
     +legend+'</div>';
 }
-function goalBarCard(f,proj,goal,pace,thisYear,r){
-  if(!goal)return "";
-  const y=f.year||new Date().getFullYear();
-  const collected=Math.round(f.income||0), projected=proj.total;
-  const maxV=Math.max(goal,projected,collected,1);
-  const pc=function(v){ return Math.max(0,Math.min(100,v/maxV*100)); };
-  const collW=pc(collected), projW=pc(projected), goalL=pc(goal);
-  const projPctGoal=Math.round(projected/goal*100), collPctGoal=Math.round(collected/goal*100);
-  const clears=projected>=goal;
-  const pill=clears
+/* Monthly cash for an open deal IF won, normalizing a missing start to next month. */
+function dealMonthCashIfWon(l,y,mi){ let sd=(l.startDate&&/^\d{4}-\d{2}-\d{2}$/.test(l.startDate))?l.startDate:null;
+  if(!sd){ const now=new Date(); const abs=now.getFullYear()*12+now.getMonth()+1; sd=Math.floor(abs/12)+"-"+String((abs%12)+1).padStart(2,"0")+"-01"; }
+  return dealMonthAmount(Object.assign({},l,{startDate:sd}),y,mi); }
+/* Burn-up chart: a diagonal "where you need to be" pace ramp to the goal, plus the
+   year building up as three stacked lines — collected (actual), + contracted, + hot. */
+function goalPaceCard(f,proj,goal){
+  const now=new Date(); const y=f.year||now.getFullYear(); const Y=now.getFullYear();
+  const thisYear=(y===Y); const cm=thisYear?now.getMonth():11;
+  const months=(f.months||[]);
+  const won=(state.pipeline||[]).filter(l=>isWon(l.stage));
+  const hot=hotDealsList();
+  const mInc=[],mCon=[],mHot=[];
+  for(let i=0;i<12;i++){ mInc[i]=(months[i]&&+months[i].income)||0;
+    mCon[i]=won.reduce(function(s,l){ return s+dealMonthAmount(l,y,i); },0);
+    mHot[i]=hot.reduce(function(s,l){ return s+dealMonthCashIfWon(l,y,i); },0); }
+  const actual=[]; let ca=0;
+  for(let m=0;m<12;m++){ ca+=(m<=cm)?mInc[m]:0; actual[m]=(m<=cm)?ca:null; }
+  const collNow=actual[cm]||0;
+  const contr=[],hotc=[]; let cC=collNow,cH=collNow;
+  for(let m=0;m<12;m++){
+    if(m<cm){ contr[m]=null; hotc[m]=null; }
+    else if(m===cm){ contr[m]=collNow; hotc[m]=collNow; }
+    else { cC+=mCon[m]; cH+=(mCon[m]+mHot[m]); contr[m]=cC; hotc[m]=cH; }
+  }
+  const projTotal=proj.total;
+  const ymax=Math.max(1,(Math.max(goal||0,hotc[11]||0,contr[11]||0,collNow))*1.10);
+  const W=680,H=236,padL=46,padR=14,padT=16,padB=26, pw=W-padL-padR, ph=H-padT-padB;
+  const x=function(m){ return padL+(m/11)*pw; }, yv=function(v){ return padT+ph-(v/ymax)*ph; };
+  const MON=["J","F","M","A","M","J","J","A","S","O","N","D"];
+  const grid=[0,0.25,0.5,0.75,1].map(function(fr){ const v=ymax*fr; return '<line x1="'+padL+'" y1="'+yv(v).toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yv(v).toFixed(1)+'" stroke="var(--line)" stroke-width="'+(fr===0?1:.6)+'"/>'+(fr>0?'<text x="'+(padL-6)+'" y="'+(yv(v)+3).toFixed(1)+'" text-anchor="end" font-size="9" font-weight="700" fill="var(--muted)">'+kfmt(v)+'</text>':''); }).join("");
+  const path=function(arr,from,to){ let d="",started=false; for(let m=from;m<=to;m++){ if(arr[m]==null)continue; d+=(started?"L":"M")+x(m).toFixed(1)+","+yv(arr[m]).toFixed(1)+" "; started=true; } return d.trim(); };
+  // pace ramp (shadow): straight line Jan-start(0) -> Dec-end(goal)
+  let paceEls="";
+  if(goal){ const x0=padL, x1=W-padR, py0=yv(0), py1=yv(goal);
+    paceEls='<polygon points="'+x0+','+py0.toFixed(1)+' '+x1+','+py1.toFixed(1)+' '+x1+','+py0.toFixed(1)+'" fill="color-mix(in srgb,var(--muted) 10%,transparent)"/>'
+      +'<line x1="'+x0+'" y1="'+py0.toFixed(1)+'" x2="'+x1+'" y2="'+py1.toFixed(1)+'" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.7"/>'
+      +'<line x1="'+padL+'" y1="'+yv(goal).toFixed(1)+'" x2="'+(W-padR)+'" y2="'+yv(goal).toFixed(1)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3" opacity="0.55"/>'
+      +'<text x="'+(W-padR)+'" y="'+(yv(goal)-5).toFixed(1)+'" text-anchor="end" font-size="9.5" font-weight="800" fill="var(--muted)">goal '+kfmt(goal)+'</text>'; }
+  const dot=function(arr,from,to,color){ let s=""; for(let m=from;m<=to;m++){ if(arr[m]==null)continue; s+='<circle cx="'+x(m).toFixed(1)+'" cy="'+yv(arr[m]).toFixed(1)+'" r="7" fill="transparent" data-tip="'+esc(months[m]&&months[m].month||MONTHS_FULL(m,y))+' · '+money(Math.round(arr[m]))+'"></circle>'; } return s; };
+  const hotLine=hot.length?('<path d="'+path(hotc,cm,11)+'" fill="none" stroke="#5b7fa6" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/>'):"";
+  const monLabels=MON.map(function(mm,i){ return '<text x="'+x(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+(i===cm&&thisYear?"var(--ink2)":"var(--muted)")+'">'+mm+'</text>'; }).join("");
+  const today=thisYear?('<line x1="'+x(cm).toFixed(1)+'" y1="'+padT+'" x2="'+x(cm).toFixed(1)+'" y2="'+(padT+ph)+'" stroke="var(--ink)" stroke-width="1" stroke-dasharray="2 3" opacity="0.35"/>'):"";
+  const svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" preserveAspectRatio="xMidYMid meet">'
+    +grid+paceEls+today
+    +'<path d="'+path(hotc,cm,11)+'" fill="none" stroke="transparent"/>'
+    +hotLine
+    +'<path d="'+path(contr,cm,11)+'" fill="none" stroke="#D9A05B" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/>'
+    +'<path d="'+path(actual,0,cm)+'" fill="none" stroke="#3f7d5a" stroke-width="2.6" stroke-linecap="round"/>'
+    +(hot.length?dot(hotc,cm+1,11,"#5b7fa6"):"")+dot(contr,cm+1,11,"#D9A05B")+dot(actual,0,cm,"#3f7d5a")
+    +'<circle cx="'+x(cm).toFixed(1)+'" cy="'+yv(collNow).toFixed(1)+'" r="3.4" fill="#3f7d5a"/>'
+    +monLabels+'</svg>';
+  const legend='<div class="fin-legend" style="flex-wrap:wrap">'
+    +'<span><i style="background:#3f7d5a"></i>Collected</span>'
+    +'<span><i style="background:#D9A05B"></i>+ Contracted</span>'
+    +(hot.length?'<span><i style="background:#5b7fa6"></i>+ Hot deals</span>':'')
+    +'<span><i style="background:var(--muted);opacity:.6"></i>Goal pace</span></div>';
+  const projPctGoal=goal?Math.round(projTotal/goal*100):null;
+  const clears=goal&&projTotal>=goal;
+  const pill=goal?(clears
     ?'<span class="gbar-pill" style="color:#3f7d5a;background:color-mix(in srgb,#3f7d5a 14%,transparent)">on track to clear your goal</span>'
-    :'<span class="gbar-pill" style="color:#b07a2a;background:color-mix(in srgb,#b07a2a 14%,transparent)">'+money(goal-projected)+' to go</span>';
-  const projLabelLeft=Math.max(projW,24);
-  const qboGap=(f.income!=null)?Math.round((f.income||0)-r.recognizedYTD):null;
-  const recon=(qboGap!=null&&qboGap>=Math.max(500,r.recognizedYTD*0.05))
-    ?'<div class="rsub" style="margin-top:12px">Why collected is higher than your '+y+' contracts predict: some is cash from <b>prior-year contracts</b> still paying out, and <b>installment closeouts</b> not yet entered as '+y+' contracts — real income, just not tied to a '+y+' deal. Your projection is built on the actual collected number, so it is <b>not</b> double-counted.</div>'
-    :'';
+    :'<span class="gbar-pill" style="color:#b07a2a;background:color-mix(in srgb,#b07a2a 14%,transparent)">'+money(goal-projTotal)+' to go</span>'):'';
   return '<div class="rep-card rep-full gbar-card" style="margin-bottom:16px">'
-    +'<div class="gbar-head"><div style="min-width:0"><div class="gbar-lbl">Projected '+y+' income vs goal</div>'
-      +'<div class="gbar-big">'+money(projected)+' <span class="gbar-pct">'+projPctGoal+'% of your '+money(goal)+' goal</span></div></div>'+pill+'</div>'
-    +'<div class="gbar-track">'
-      +'<div class="gbar-fill gbar-proj" style="width:'+projW.toFixed(1)+'%"></div>'
-      +'<div class="gbar-fill gbar-coll" style="width:'+collW.toFixed(1)+'%"></div>'
-      +'<span class="gbar-vlabel gbar-vcoll">'+kfmt(collected)+' collected</span>'
-      +'<span class="gbar-vlabel gbar-vproj" style="left:'+projLabelLeft.toFixed(1)+'%">'+kfmt(projected)+' projected</span>'
-      +'<div class="gbar-goaltick" style="left:'+goalL.toFixed(1)+'%" title="Goal '+money(goal)+'"></div>'
-      +(thisYear?'<div class="gbar-todaytick" style="left:'+pace.toFixed(1)+'%" title="Today"></div>':'')
-    +'</div>'
-    +'<div class="gbar-scale"><span>collected <b style="color:#3f7d5a">'+money(collected)+'</b> · '+collPctGoal+'% of goal</span><span>goal <b>'+money(goal)+'</b>'+(thisYear?' · today marks '+Math.round(pace)+'% of the year':'')+'</span></div>'
-    +recon+'</div>';
+    +'<div class="gbar-head"><div style="min-width:0;cursor:pointer" onclick="openProjectionMath()" title="See the math"><div class="gbar-lbl">Projected '+y+' income</div>'
+      +'<div class="gbar-big">'+money(projTotal)+' '+(projPctGoal!=null?'<span class="gbar-pct">'+projPctGoal+'% of your '+money(goal)+' goal</span>':'')+' <span style="color:var(--accent);font-size:12px;font-weight:800">see the math</span></div></div>'+pill+'</div>'
+    +svg+legend+'</div>';
 }
+function MONTHS_FULL(i,y){ return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i]+" "+y; }
 function finOverviewHtml(f){
   const now=new Date(); const y=now.getFullYear();
   const monthsElapsed=(f.year&&f.year===y)?(now.getMonth()+1):12;
@@ -6621,13 +6647,9 @@ function finOverviewHtml(f){
   const goal=(typeof revGoalTarget==="function")?revGoalTarget():((state.meta&&state.meta.revenueGoal)||0);
   const r=contractRecon(); const proj=yearProjection();
   const when=f.syncedAt?new Date(f.syncedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-  const openN=(state.pipeline||[]).filter(l=>ACTIVE_STAGES.includes(l.stage)).length;
   const wonN=(state.pipeline||[]).filter(l=>isWon(l.stage)&&leadDecidedYear(l).y===y).length;
-  const thisYear=(!f.year||f.year===y);
-  const pace=thisYear?Math.min(100,Math.round((now-new Date(y,0,1))/(new Date(y+1,0,1)-new Date(y,0,1))*100)):100;
   const prevYTD=(f.prev&&Array.isArray(f.prev.months))?f.prev.months.slice(0,Math.min(monthsElapsed,mAct)).reduce(function(s,m){ return s+(m.income||0); },0):0;
   const yoy=(prevYTD>0&&f.income!=null)?Math.round(((f.income||0)-prevYTD)/prevYTD*100):null;
-  const projPctGoal=goal?Math.round(proj.total/goal*100):null;
   const chip=function(txt,tone){ const c=tone==="good"?"#3f7d5a":tone==="bad"?"#c1604a":tone==="warn"?"#b07a2a":"#5b7fa6"; return '<span class="fh-chip" style="color:'+c+';background:color-mix(in srgb,'+c+' 12%,transparent)">'+txt+'</span>'; };
   const hero=function(l,v,ch,cap,col,click,marker){ return '<div class="fin-hero-t" style="border-top:3px solid '+col+'" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="hv"><span class="v" style="color:'+col+'">'+v+'</span>'+(ch||'')+'</div><div class="m">'+(cap?cap+' · ':'')+'<span style="color:var(--accent);font-weight:800">'+marker+'</span></div></div>'; };
   const stat=function(l,v,cap,col,click){ return '<div class="st" onclick="'+click+'" title="Click to open"><div class="l">'+l+'</div><div class="v" style="color:'+col+'">'+v+'</div><div class="s">'+(cap||'')+'</div></div>'; };
@@ -6647,13 +6669,12 @@ function finOverviewHtml(f){
   let tail=""; for(let i2=0;i2<tailCards.length;i2+=2){ tail+=(tailCards[i2+1]!=null)?('<div class="fin-row2">'+tailCards[i2]+tailCards[i2+1]+'</div>'):('<div class="fin-row2" style="grid-template-columns:1fr">'+tailCards[i2]+'</div>'); }
   return ''
   +'<div class="rsub" style="margin:-4px 0 12px">'+(f.year||y)+' · '+monthsElapsed+' month'+(monthsElapsed===1?'':'s')+' in'+(when?(' · synced '+esc(when)):'')+'</div>'
-  +'<div class="fin-hero">'
+  +'<div class="fin-hero fin-hero2">'
   +hero('Cash collected',money(f.income),(yoy!=null?chip((yoy>=0?'+':'')+yoy+'% vs last year',yoy>=0?'good':'bad'):''),'','#3f7d5a','openCollectedMath()','month by month')
-  +hero('Booked this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'','#5b7fa6','openBookedList()','every deal')
-  +hero('Projected '+y+' income',money(proj.total),(projPctGoal!=null?chip(projPctGoal+'% of goal',(proj.total>=goal)?'good':'warn'):''),'collected + contracted + hot deals','#3f7d5a','openProjectionMath()','see the math')
+  +hero('Sold this year',money(bookedThisYearVal()),(wonN?chip(wonN+' deal'+(wonN===1?'':'s')+' won','neutral'):''),'','#5b7fa6','openBookedList()','every deal')
   +'</div>'
   +'<div class="fin-strip">'+stats.join("")+'</div>'
-  +goalBarCard(f,proj,goal,pace,thisYear,r)
+  +goalPaceCard(f,proj,goal)
   +scenarioCard()
   +'<div class="fin-row2 fin-asym2">'
   +'<div class="rep-card"><div class="rc-head"><div style="min-width:0"><h3 style="margin:0">Income &amp; spending</h3><div class="rsub" style="margin:2px 0 0">'+(rv.prev?('last year — '+(rv.year||'')):'click a bar for its transactions · tap a legend item to hide that series')+'</div></div>'+rangeSel+'</div>'
