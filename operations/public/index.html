@@ -1515,6 +1515,8 @@
   .ee-step{ display:flex;background:var(--side);border:1px solid var(--line2);border-radius:8px;overflow:hidden }
   .ee-step button{ width:32px;background:none;border:none;color:var(--ink2);font-size:16px;cursor:pointer } .ee-step button:hover{ background:var(--hover);color:var(--ink) }
   .ee-step .v{ flex:1;text-align:center;font-size:13px;font-weight:700;align-self:center }
+  .ee-step input.v{ background:none;border:none;color:var(--ink);padding:7px 2px;font-family:inherit;min-width:0;cursor:text }
+  .ee-step input.v::-webkit-calendar-picker-indicator{ display:none }
   .ee-dur{ text-align:center;font-size:12px;color:var(--ink2) } .ee-dur b{ color:var(--accent);font-size:13.5px }
   /* compact "stream" view */
   .tlrib{ display:flex;height:16px;border-radius:6px;overflow:hidden;border:1px solid var(--line);margin-bottom:12px }
@@ -5400,7 +5402,8 @@ function docPaint(){ if(_docPaint)_docPaint(); else paintDoc(); }
 /* ---------- small SVG chart helpers ---------- */
 function fmtMin(min){ min=Math.round(min||0); const h=Math.floor(min/60),m=min%60; if(h&&m)return h+"h "+m+"m"; if(h)return h+"h"; return m+"m"; }
 function chartBars(rows,opt){ opt=opt||{}; const max=Math.max(1,...rows.map(r=>r.value)); const w=520,labelW=opt.labelW||130,rowH=30,gap=11,barMax=w-labelW-96; const h=Math.max(1,rows.length)*(rowH+gap); let y=0,out="";
-  rows.forEach(r=>{ const bw=r.value>0?Math.max(3,(r.value/max)*barMax):0; out+=`<text x="0" y="${y+rowH/2+4}">${esc(r.label)}</text><rect x="${labelW}" y="${y+3}" width="${barMax}" height="${rowH-6}" rx="5" fill="var(--side)"/><rect x="${labelW}" y="${y+3}" width="${bw}" height="${rowH-6}" rx="5" fill="${r.color||'#CB6E55'}"/><text x="${labelW+barMax+8}" y="${y+rowH/2+4}" style="fill:var(--ink2);font-weight:800">${esc(opt.fmt?opt.fmt(r.value):r.value)}</text>`; y+=rowH+gap; });
+  const maxCh=Math.max(6,Math.floor((labelW-8)/6.6));
+  rows.forEach(r=>{ const bw=r.value>0?Math.max(3,(r.value/max)*barMax):0; const full=String(r.label||""); const lab=full.length>maxCh?(full.slice(0,maxCh-1)+"\u2026"):full; out+=`<text x="0" y="${y+rowH/2+4}">${esc(lab)}${full!==lab?`<title>${esc(full)}</title>`:""}</text><rect x="${labelW}" y="${y+3}" width="${barMax}" height="${rowH-6}" rx="5" fill="var(--side)"/><rect x="${labelW}" y="${y+3}" width="${bw}" height="${rowH-6}" rx="5" fill="${r.color||'#CB6E55'}"/><text x="${labelW+barMax+8}" y="${y+rowH/2+4}" style="fill:var(--ink2);font-weight:800">${esc(opt.fmt?opt.fmt(r.value):r.value)}</text>`; y+=rowH+gap; });
   return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">${out}</svg>`; }
 function arcSeg(cx,cy,r,rin,a1,a2,color){ const large=(a2-a1)>Math.PI?1:0; const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2),x3=cx+rin*Math.cos(a2),y3=cy+rin*Math.sin(a2),x4=cx+rin*Math.cos(a1),y4=cy+rin*Math.sin(a1); return `<path d="M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L${x3.toFixed(2)} ${y3.toFixed(2)} A${rin} ${rin} 0 ${large} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z" fill="${color}"/>`; }
 function chartDonut(rows,centerLabel){ const total=rows.reduce((s,r)=>s+r.value,0); let a=-Math.PI/2,segs=""; if(total>0){ rows.forEach(d=>{ if(d.value<=0)return; let frac=d.value/total; let a2=a+frac*Math.PI*2; if(frac>=0.9999)a2=a+Math.PI*2-0.0001; segs+=arcSeg(70,70,56,36,a,a2,d.color); a=a2; }); } else { segs=`<circle cx="70" cy="70" r="46" fill="none" stroke="var(--side)" stroke-width="20"/>`; }
@@ -5413,6 +5416,26 @@ function timeRange(){ return (state.config&&state.config.timeRange)||"week"; }
 function setTimeRange(r){ state.config=state.config||{}; state.config.timeRange=r; save(); if(view==="time")renderTime($("#main")); }
 function timeBucketFilter(){ return (state.config&&state.config.timeBucketFilter)||""; }
 function setTimeBucketFilter(v){ state.config=state.config||{}; state.config.timeBucketFilter=v; save(); if(view==="time")renderTime($("#main")); }
+let _tvWeekOff=0;
+function tvWeekNav(d){ _tvWeekOff=Math.min(0,(_tvWeekOff||0)+d); if(view==="time")renderTime($("#main")); }
+function tvWeekCard(){
+  const bf=timeBucketFilter();
+  const start=mondayOfWeek()+_tvWeekOff*7*86400000, end=start+7*86400000;
+  const rows=allTimeEntries().filter(e=>e.start>=start&&e.start<end).filter(e=>!bf||(e.kind==="bucket"&&e.bucketId===bf));
+  const per={}; rows.forEach(e=>{ per[e.date]=(per[e.date]||0)+e.seconds; });
+  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const bars=[]; let tot=0;
+  for(let i=0;i<7;i++){ const dt=new Date(start+i*86400000); const key=fmtDateKey(dt); const s=per[key]||0; tot+=s;
+    bars.push({label:names[i]+" "+(dt.getMonth()+1)+"/"+dt.getDate(),value:Math.round(s/60),color:(i>=5)?"#8a8f98":"#5b7fa6"}); }
+  const s0=new Date(start), s1=new Date(end-86400000);
+  const lbl=_tvWeekOff===0?"This week":(_tvWeekOff===-1?"Last week":((s0.getMonth()+1)+"/"+s0.getDate()+" \u2013 "+(s1.getMonth()+1)+"/"+s1.getDate()));
+  return '<div class="rep-card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="margin:0">By day</h3>'
+    +'<span style="margin-left:auto;display:flex;align-items:center;gap:6px"><button class="btn btn-ghost btn-sm" style="padding:3px 10px" onclick="tvWeekNav(-1)" title="Previous week">\u2039</button>'
+    +'<span id="tvWeekLbl" style="font-size:12px;font-weight:800;color:var(--ink2);min-width:84px;text-align:center">'+lbl+'</span>'
+    +'<button class="btn btn-ghost btn-sm" style="padding:3px 10px" onclick="tvWeekNav(1)" title="Next week" '+(_tvWeekOff>=0?"disabled":"")+'>\u203a</button></span></div>'
+    +'<div class="rsub">Mon\u2013Sun \u00b7 '+fmtDur(tot)+' tracked'+(bf?" in this bucket":"")+'</div>'
+    +chartBars(bars,{fmt:fmtMin,labelW:90})+'</div>';
+}
 function timeRangeBounds(r){
   const now=new Date();
   if(r==="all")return [0,Infinity];
@@ -5632,6 +5655,9 @@ let _eeState=null;
 function openEntryEditor(spec){ _eeState=spec; drawEntryEditor(); }
 function _eeClose(){ const o=document.getElementById("eeScrim"); if(o)o.remove(); document.removeEventListener("keydown",_eeKey); _eeState=null; }
 function _eeKey(ev){ if(ev.key==="Escape")_eeClose(); }
+function _eeParseHM(v){ const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||"").trim()); if(!m)return null; const t=(+m[1])*60+(+m[2]); return (t>=0&&t<1440)?t:null; }
+function _eeSync(){ const st=_eeState; if(!st)return; const s=document.getElementById("eeS"),e=document.getElementById("eeE"),du=document.getElementById("eeDur");
+  if(s)s.value=_tlHM(st.startMin); if(e)e.value=_tlHM(st.startMin+st.mins); if(du)du.textContent=fmtDur(st.mins*60); }
 function drawEntryEditor(){
   const st=_eeState; if(!st)return;
   const buckets=(state.timeBuckets||[]);
@@ -5646,8 +5672,8 @@ function drawEntryEditor(){
       <div class="ee-f"><label>What</label><input id="eeWhat" value="${esc(st.label||"")}" ${st.kind==="task"?"disabled":""} placeholder="e.g. Admin"></div>
       ${whereField}
       <div class="ee-2">
-        <div class="ee-f"><label>Start</label><div class="ee-step"><button data-st="s-">−</button><span class="v" id="eeS">${_tlFmt(st.startMin)}</span><button data-st="s+">+</button></div></div>
-        <div class="ee-f"><label>End</label><div class="ee-step"><button data-st="e-">−</button><span class="v" id="eeE">${_tlFmt(st.startMin+st.mins)}</span><button data-st="e+">+</button></div></div>
+        <div class="ee-f"><label>Start</label><div class="ee-step"><button data-st="s-">−</button><input type="time" class="v" id="eeS" value="${_tlHM(st.startMin)}" title="Type for minute-level control"><button data-st="s+">+</button></div></div>
+        <div class="ee-f"><label>End</label><div class="ee-step"><button data-st="e-">−</button><input type="time" class="v" id="eeE" value="${_tlHM(st.startMin+st.mins)}" title="Type for minute-level control"><button data-st="e+">+</button></div></div>
       </div>
       <div class="ee-dur">Duration <b id="eeDur">${fmtDur(st.mins*60)}</b></div>
     </div>
@@ -5662,9 +5688,12 @@ function drawEntryEditor(){
   const wEl=document.getElementById("eeWhat"); if(wEl&&st.kind!=="task")wEl.oninput=()=>{ st.label=wEl.value; };
   const whEl=document.getElementById("eeWhere"); if(whEl)whEl.onchange=()=>{ st.bucketId=whEl.value; const b=bucketById(whEl.value); if(b){ st.color=b.color; document.getElementById("eeSw").style.background=b.color; if(st.kind!=="task"){ st.label=b.name; if(wEl)wEl.value=b.name; } } };
   o.querySelectorAll("[data-st]").forEach(btn=>btn.onclick=()=>{ const d=btn.dataset.st; const f=d[0], up=d[1]==="+"; const step=15;
-    if(f==="s"){ st.startMin=Math.max(0,Math.min(1439,st.startMin+(up?step:-step))); }
-    else { st.mins=Math.max(step, st.mins+(up?step:-step)); }
-    document.getElementById("eeS").textContent=_tlFmt(st.startMin); document.getElementById("eeE").textContent=_tlFmt(st.startMin+st.mins); document.getElementById("eeDur").textContent=fmtDur(st.mins*60); });
+    if(f==="s"){ const end=st.startMin+st.mins; st.startMin=Math.max(0,Math.min(end-5,st.startMin+(up?step:-step))); st.mins=end-st.startMin; }
+    else { st.mins=Math.max(5, st.mins+(up?step:-step)); }
+    _eeSync(); });
+  const sIn=document.getElementById("eeS"), eIn=document.getElementById("eeE");
+  if(sIn)sIn.onchange=()=>{ const v=_eeParseHM(sIn.value); if(v==null){ _eeSync(); return; } const end=st.startMin+st.mins; st.startMin=Math.max(0,Math.min(Math.max(0,end-5),v)); st.mins=Math.max(5,end-st.startMin); _eeSync(); };
+  if(eIn)eIn.onchange=()=>{ const v=_eeParseHM(eIn.value); if(v==null){ _eeSync(); return; } let mins=v-st.startMin; if(mins<0)mins+=1440; st.mins=Math.max(5,mins); _eeSync(); };
   document.getElementById("eeSave").onclick=_eeSave;
   const del=document.getElementById("eeDel"); if(del)del.onclick=_eeDelete;
   document.addEventListener("keydown",_eeKey);
@@ -5686,14 +5715,11 @@ function renderTime(m){
   const rows=timeVisibleRows();
   const total=rows.reduce((s,e)=>s+e.seconds,0);
   const days=new Set(rows.map(e=>e.date)).size;
+  const wkdayCount=new Set(rows.filter(e=>{ const g=new Date(e.date+"T00:00:00").getDay(); return g>=1&&g<=5; }).map(e=>e.date)).size;
+  const avgDen=wkdayCount||days;
   const byLabel={}; rows.forEach(e=>{ const k=e.label; if(!byLabel[k])byLabel[k]={secs:0,color:e.color}; byLabel[k].secs+=e.seconds; });
   const barRows=Object.entries(byLabel).sort((a,b)=>b[1].secs-a[1].secs).slice(0,10).map(([k,v])=>({label:k,value:Math.round(v.secs/60),color:v.color}));
   const top=barRows[0];
-  const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; const perDay={};
-  rows.forEach(e=>{ perDay[e.date]=(perDay[e.date]||0)+e.seconds; });
-  const dayRows=Object.entries(perDay).sort((a,b)=>a[0]<b[0]?-1:1).slice(-14).map(([d,s])=>{
-    const dt=new Date(d+"T00:00:00");
-    return {label:dayNames[dt.getDay()]+" "+(dt.getMonth()+1)+"/"+dt.getDate(),value:Math.round(s/60),color:"#5b7fa6"}; });
   const running=localTimer();
   setHead("Workspace","Time",
     fmtDur(total)+" in "+(TIME_RANGES.find(r=>r[0]===timeRange())||["","this week"])[1].toLowerCase()+(days?(" \u00b7 "+days+" day"+(days===1?"":"s")):""),
@@ -5728,12 +5754,12 @@ function renderTime(m){
       <select class="tv-filter" onchange="setTimeBucketFilter(this.value)">${bopts}</select></div>
     <div class="kpi-grid">
       <div class="kpi"><div class="label">Total</div><div class="value">${fmtDur(total)}</div><div class="meta">${rows.length} entr${rows.length===1?"y":"ies"}</div></div>
-      <div class="kpi"><div class="label">Daily average</div><div class="value">${days?fmtDur(Math.round(total/days)):"\u2014"}</div><div class="meta">across ${days} day${days===1?"":"s"} tracked</div></div>
+      <div class="kpi"><div class="label">Daily average</div><div class="value">${avgDen?fmtDur(Math.round(total/avgDen)):"\u2014"}</div><div class="meta">across ${avgDen} weekday${avgDen===1?"":"s"} \u2014 weekend hours count, weekend days don't</div></div>
       <div class="kpi"><div class="label">Biggest bucket</div><div class="value" style="font-size:20px">${top?esc(top.label):"\u2014"}</div><div class="meta">${top?fmtDur(byLabel[top.label].secs):"nothing logged yet"}</div></div>
     </div>
     <div class="rep-grid">
       <div class="rep-card"><h3>Where the time went</h3><div class="rsub">Time by bucket and task</div>${barRows.length?chartBars(barRows,{fmt:fmtMin,labelW:160}):'<div class="rsub">Nothing logged in this range.</div>'}</div>
-      <div class="rep-card"><h3>By day</h3><div class="rsub">Most recent ${Math.min(14,dayRows.length)} days with time</div>${dayRows.length?chartBars(dayRows,{fmt:fmtMin,labelW:90}):'<div class="rsub">Nothing logged in this range.</div>'}</div>
+      ${tvWeekCard()}
     </div>
     <div class="panel"><div class="panel-head"><h3>${timeView()==="timeline"?"Day timeline":timeView()==="compact"?"Day stream":"Entries"}</h3><span class="spacer"></span>
       <span class="tvseg"><button class="${timeView()==="timeline"?"on":""}" onclick="setTimeView('timeline')">Timeline</button><button class="${timeView()==="compact"?"on":""}" onclick="setTimeView('compact')">Compact</button><button class="${timeView()==="list"?"on":""}" onclick="setTimeView('list')">List</button></span></div>
