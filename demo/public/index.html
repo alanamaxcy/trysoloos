@@ -1434,6 +1434,7 @@
   .ee-step{ display:flex;background:var(--side);border:1px solid var(--line2);border-radius:8px;overflow:hidden }
   .ee-step button{ width:32px;background:none;border:none;color:var(--ink2);font-size:16px;cursor:pointer } .ee-step button:hover{ background:var(--hover);color:var(--ink) }
   .ee-step .v{ flex:1;text-align:center;font-size:13px;font-weight:700;align-self:center }
+  .ee-gaphint{ font-size:11.5px;font-weight:700;color:var(--accent-dark);background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:8px;padding:6px 10px;margin-top:8px }
   .ee-step input.v{ background:none;border:none;color:var(--ink);padding:7px 2px;font-family:inherit;min-width:0;cursor:text }
   .ee-step input.v::-webkit-calendar-picker-indicator{ display:none }
   .ee-dur{ text-align:center;font-size:12px;color:var(--ink2) } .ee-dur b{ color:var(--accent);font-size:13.5px }
@@ -5770,8 +5771,14 @@ function openEntryEditor(spec){ _eeState=spec; drawEntryEditor(); }
 function _eeClose(){ const o=document.getElementById("eeScrim"); if(o)o.remove(); document.removeEventListener("keydown",_eeKey); _eeState=null; }
 function _eeKey(ev){ if(ev.key==="Escape")_eeClose(); }
 function _eeParseHM(v){ const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||"").trim()); if(!m)return null; const t=(+m[1])*60+(+m[2]); return (t>=0&&t<1440)?t:null; }
+function _eePrevEnd(st){ if(!st)return null; const es=dayEntries(timeDayKey()); let best=null;
+  es.forEach(function(e){ if(st.id&&e.id===st.id)return; const s=_tlMin(e.start), en=s+Math.max(1,Math.round((e.seconds||0)/60)); if(en<=st.startMin&&(best==null||en>best))best=en; });
+  return best; }
+function _eeGapText(){ const st=_eeState; if(!st)return ""; const pe=_eePrevEnd(st); if(pe==null||pe>=st.startMin)return ""; const g=st.startMin-pe; if(g>20)return "";
+  return '\u21b3 '+fmtDur(g*60)+' gap after the previous entry \u2014 tap \u2212 on Start to close it'; }
 function _eeSync(){ const st=_eeState; if(!st)return; const s=document.getElementById("eeS"),e=document.getElementById("eeE"),du=document.getElementById("eeDur");
-  if(s)s.value=_tlHM(st.startMin); if(e)e.value=_tlHM(st.startMin+st.mins); if(du)du.textContent=fmtDur(st.mins*60); }
+  if(s)s.value=_tlHM(st.startMin); if(e)e.value=_tlHM(st.startMin+st.mins); if(du)du.textContent=fmtDur(st.mins*60);
+  const gp=document.getElementById("eeGap"); if(gp){ const tx=_eeGapText(); gp.textContent=tx; gp.style.display=tx?"block":"none"; } }
 function drawEntryEditor(){
   const st=_eeState; if(!st)return;
   const buckets=(state.timeBuckets||[]);
@@ -5790,6 +5797,7 @@ function drawEntryEditor(){
         <div class="ee-f"><label>End</label><div class="ee-step"><button data-st="e-">−</button><input type="time" class="v" id="eeE" value="${_tlHM(st.startMin+st.mins)}" title="Type for minute-level control"><button data-st="e+">+</button></div></div>
       </div>
       <div class="ee-dur">Duration <b id="eeDur">${fmtDur(st.mins*60)}</b></div>
+      <div class="ee-gaphint" id="eeGap" style="display:none"></div>
     </div>
     <div style="padding:11px 17px 15px;display:flex;gap:9px;align-items:center">
       <button class="btn" id="eeSave">${st.mode==="new"?"Log it":"Save"}</button>
@@ -5802,7 +5810,9 @@ function drawEntryEditor(){
   const wEl=document.getElementById("eeWhat"); if(wEl&&st.kind!=="task")wEl.oninput=()=>{ st.label=wEl.value; };
   const whEl=document.getElementById("eeWhere"); if(whEl)whEl.onchange=()=>{ st.bucketId=whEl.value; const b=bucketById(whEl.value); if(b){ st.color=b.color; document.getElementById("eeSw").style.background=b.color; if(st.kind!=="task"){ st.label=b.name; if(wEl)wEl.value=b.name; } } };
   o.querySelectorAll("[data-st]").forEach(btn=>btn.onclick=()=>{ const d=btn.dataset.st; const f=d[0], up=d[1]==="+"; const step=15;
-    if(f==="s"){ const end=st.startMin+st.mins; st.startMin=Math.max(0,Math.min(end-5,st.startMin+(up?step:-step))); st.mins=end-st.startMin; }
+    if(f==="s"){ const end=st.startMin+st.mins; let ns=st.startMin+(up?step:-step);
+      if(!up){ const pe=_eePrevEnd(st); if(pe!=null&&pe<st.startMin&&ns<pe)ns=pe; }
+      st.startMin=Math.max(0,Math.min(end-5,ns)); st.mins=end-st.startMin; }
     else { st.mins=Math.max(5, st.mins+(up?step:-step)); }
     _eeSync(); });
   const sIn=document.getElementById("eeS"), eIn=document.getElementById("eeE");
@@ -5810,6 +5820,7 @@ function drawEntryEditor(){
   if(eIn)eIn.onchange=()=>{ const v=_eeParseHM(eIn.value); if(v==null){ _eeSync(); return; } let mins=v-st.startMin; if(mins<0)mins+=1440; st.mins=Math.max(5,mins); _eeSync(); };
   document.getElementById("eeSave").onclick=_eeSave;
   const del=document.getElementById("eeDel"); if(del)del.onclick=_eeDelete;
+  _eeSync();
   document.addEventListener("keydown",_eeKey);
 }
 function _eeSave(){ const st=_eeState; if(!st)return; const sHM=_tlHM(st.startMin), eHM=_tlHM(st.startMin+st.mins);
